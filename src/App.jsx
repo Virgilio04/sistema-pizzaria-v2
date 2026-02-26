@@ -898,6 +898,28 @@ ${listaMovimentacoes.length > 0 ? listaMovimentacoes : '(Nenhuma movimentação)
     }
   };
 
+  // --- FUNÇÃO PARA EXCLUIR VÁRIOS FUNCIONÁRIOS DE UMA VEZ ---
+  const excluirEmMassa = async () => {
+    const confirmacao = window.confirm(`PERIGO: Tem certeza que deseja excluir ${idsSelecionados.length} colaboradores ao mesmo tempo? Isso não tem volta.`);
+    
+    if (confirmacao) {
+      // O Supabase permite apagar vários de uma vez usando o .in('id', arrayDeIds)
+      const { error } = await supabase
+        .from('funcionarios')
+        .delete()
+        .in('id', idsSelecionados);
+
+      if (error) {
+        console.error('Erro ao excluir em massa:', error);
+        setModalAviso({ titulo: "Erro", msg: "Não foi possível excluir. Alguns podem ter pendências.", tipo: 'error' });
+      } else {
+        setModalAviso({ titulo: "Sucesso", msg: `${idsSelecionados.length} colaboradores excluídos!`, tipo: 'success' });
+        fetchFuncionarios(); // Atualiza a lista
+        setIdsSelecionados([]); // Esconde a barra preta
+      }
+    }
+  };
+
   const toggleSelecao = (id) => {
     if (idsSelecionados.includes(id)) {
       setIdsSelecionados(idsSelecionados.filter(item => item !== id));
@@ -1990,9 +2012,16 @@ const realizarLogin = async (perfil) => {
            <span className="font-bold text-sm">{idsSelecionados.length} selecionados</span>
            <div className="h-4 w-px bg-gray-600"></div>
            <button onClick={() => setModalEdicaoMassa(true)} className="flex items-center gap-2 hover:text-blue-300 font-bold text-sm transition-colors">
-              <Edit2 size={16}/> Editar em Massa
+              <Edit2 size={16}/> Editar
            </button>
-           <button onClick={() => setIdsSelecionados([])} className="ml-2 bg-gray-700 hover:bg-gray-600 rounded-full p-1"><X size={14}/></button>
+           
+           {/* --- NOVO BOTÃO DE EXCLUIR NA BARRA --- */}
+           <div className="h-4 w-px bg-gray-600 mx-2"></div>
+           <button onClick={excluirEmMassa} className="flex items-center gap-2 text-red-400 hover:text-red-300 font-bold text-sm transition-colors">
+              <Trash2 size={16}/> Excluir
+           </button>
+
+           <button onClick={() => setIdsSelecionados([])} className="ml-4 bg-gray-700 hover:bg-gray-600 rounded-full p-1"><X size={14}/></button>
         </div>
       )}
 
