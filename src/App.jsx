@@ -55,7 +55,7 @@ export default function App() {
     ]
   });
 
-  const [marcasMaquinetas, setMarcasMaquinetas] = useState(['Ton', 'Cielo']);
+  const [marcasMaquinetas, setMarcasMaquinetas] = useState(['Stone', 'Ton', 'Mercado Pago']);
   const [novaMarca, setNovaMarca] = useState('');
 
   // --- CONFIGURAÇÃO DE BENEFÍCIOS (RH) ---
@@ -1242,14 +1242,27 @@ const realizarLogin = async (perfil) => {
     {/* Coluna das Maquinetas */}
     <div className="space-y-2">
       <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Maquinetas Físicas</p>
-      <div className="flex justify-between items-center py-1 border-b border-gray-50">
-        <span className="text-sm text-gray-600">Ton:</span>
-        <span className="text-sm font-bold text-gray-800">{BRL(modalDetalhes.dados.auditoria?.sistema?.ton || 0)}</span>
-      </div>
-      <div className="flex justify-between items-center py-1 border-b border-gray-50">
-        <span className="text-sm text-gray-600">Cielo:</span>
-        <span className="text-sm font-bold text-gray-800">{BRL(modalDetalhes.dados.auditoria?.sistema?.cielo || 0)}</span>
-      </div>
+      
+      {modalDetalhes.dados.auditoria?.sistema?.maquinetasDetalhadas ? (
+        Object.entries(modalDetalhes.dados.auditoria.sistema.maquinetasDetalhadas).map(([marca, valor]) => (
+          <div key={marca} className="flex justify-between items-center py-1 border-b border-gray-50">
+            <span className="text-sm text-gray-600">{marca}:</span>
+            <span className="text-sm font-bold text-gray-800">{BRL(valor || 0)}</span>
+          </div>
+        ))
+      ) : (
+        <>
+          <div className="flex justify-between items-center py-1 border-b border-gray-50">
+            <span className="text-sm text-gray-600">Ton:</span>
+            <span className="text-sm font-bold text-gray-800">{BRL(modalDetalhes.dados.auditoria?.sistema?.ton || 0)}</span>
+          </div>
+          <div className="flex justify-between items-center py-1 border-b border-gray-50">
+            <span className="text-sm text-gray-600">Cielo:</span>
+            <span className="text-sm font-bold text-gray-800">{BRL(modalDetalhes.dados.auditoria?.sistema?.cielo || 0)}</span>
+          </div>
+        </>
+      )}
+
       <div className="flex justify-between items-center py-2 bg-blue-50 px-2 rounded mt-1">
         <span className="text-xs font-bold text-blue-800 uppercase">Total Cartão:</span>
         <span className="text-sm font-black text-blue-900">{BRL(modalDetalhes.dados.auditoria?.sistema?.cartao || 0)}</span>
@@ -1354,7 +1367,18 @@ const realizarLogin = async (perfil) => {
                        <h3 className="text-blue-900 font-bold flex items-center gap-2 mb-6 text-sm uppercase tracking-wide border-b border-blue-200 pb-2"><Monitor size={18}/> 1. Previsto (Sistema)</h3>
                        <div className="space-y-4">
                            <div className="flex justify-between items-center p-3 bg-white rounded-lg border border-blue-100"><div><span className="block text-xs font-bold text-gray-500 uppercase">Dinheiro (C/ Troco)</span></div><span className="text-lg font-bold text-blue-700">{BRL(saldoFinalCaixaTeorico)}</span></div>
-                           <div className="p-3 bg-white rounded-lg border border-blue-100"><div className="flex justify-between items-center mb-2 pb-2 border-b border-gray-100"><span className="block text-xs font-bold text-gray-500 uppercase">Cartão (Total)</span><span className="text-lg font-bold text-blue-700">{BRL(totalEntradasCartao)}</span></div><div className="flex justify-between items-center text-xs text-gray-500 pl-2"><span>Ton:</span><span className="font-bold text-blue-600">{BRL(totalEntradasTon)}</span></div><div className="flex justify-between items-center text-xs text-gray-500 pl-2"><span>Cielo:</span><span className="font-bold text-blue-600">{BRL(totalEntradasCielo)}</span></div></div>
+                           <span className="block text-xs font-bold text-gray-500 uppercase">Cartão (Total)</span><div className="p-3 bg-white rounded-lg border border-blue-100">
+  <div className="flex justify-between items-center mb-2 pb-2 border-b border-gray-100">
+    <span className="block text-xs font-bold text-gray-500 uppercase">Cartão (Total)</span>
+    <span className="text-lg font-bold text-blue-700">{BRL(totalEntradasCartao)}</span>
+  </div>
+  {marcasMaquinetas.map(marca => (
+    <div key={marca} className="flex justify-between items-center text-xs text-gray-500 pl-2">
+      <span>{marca}:</span>
+      <span className="font-bold text-blue-600">{BRL(totaisMaquinetasSistema[marca] || 0)}</span>
+    </div>
+  ))}
+</div>
                            <div className="flex justify-between items-center p-3 bg-white rounded-lg border border-blue-100"><div><span className="block text-xs font-bold text-gray-500 uppercase">Tuna / App</span></div><span className="text-lg font-bold text-blue-700">{BRL(totalEntradasTuna)}</span></div>
                            <div className="flex justify-between items-center p-3 bg-white rounded-lg border border-blue-100"><div><span className="block text-xs font-bold text-gray-500 uppercase">iFood (App)</span></div><span className="text-lg font-bold text-blue-700">{BRL(totalEntradasIfood)}</span></div>
                        </div>
@@ -1386,7 +1410,13 @@ const realizarLogin = async (perfil) => {
                   <div className="bg-gray-800 text-white rounded-xl shadow-lg p-5 h-full flex flex-col">
                     <h3 className="font-bold flex items-center gap-2 mb-6 text-sm uppercase tracking-wide border-b border-gray-700 pb-2"><ArrowRightLeft size={18}/> 3. Diferenças</h3>
                     <div className="space-y-4 flex-1">
-                      {[{ label: 'Dinheiro', val: difDinheiro }, { label: 'Cartões', val: difCartao }, { label: 'Ton', val: difTon }, { label: 'Cielo', val: difCielo }, { label: 'Tuna', val: difTuna }, { label: 'iFood', val: difIfood }].map((item, idx) => (
+                      {[
+                        { label: 'Dinheiro', val: difDinheiro }, 
+                        { label: 'Cartões', val: difCartao }, 
+                        ...marcasMaquinetas.map(marca => ({ label: marca, val: diferencasMaquinetas[marca] || 0 })),
+                        { label: 'Tuna', val: difTuna }, 
+                        { label: 'iFood', val: difIfood }
+                      ].map((item, idx) => (
                         <div key={idx} className="bg-gray-700/50 p-2 px-3 rounded-lg flex justify-between items-center"><span className="text-sm text-gray-300">{item.label}</span><div className="flex items-center gap-2"><span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${getStatusDiferenca(item.val).bg.replace('bg-', 'bg-opacity-20 bg-')} ${getStatusDiferenca(item.val).cor.replace('text-', 'text-')}`}>{getStatusDiferenca(item.val).msg}</span><span className={`font-mono font-bold ${item.val < 0 ? 'text-red-400' : item.val > 0 ? 'text-blue-400' : 'text-green-400'}`}>{BRL(item.val)}</span></div></div>
                       ))}
                       <div className="bg-black/40 p-4 rounded-xl border border-gray-600 mt-4"><div className="flex justify-between items-center mb-1"><span className="text-gray-400 text-xs uppercase font-bold">Diferença Final</span><span className={`text-2xl font-bold ${difGeral < -2 ? 'text-red-500' : difGeral > 2 ? 'text-blue-400' : 'text-green-500'}`}>{BRL(difGeral)}</span></div></div>
