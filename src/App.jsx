@@ -114,6 +114,8 @@ export default function App() {
    
   // MODAIS
   const [modalAviso, setModalAviso] = useState(null); 
+  const [modalResumoValesAberto, setModalResumoValesAberto] = useState(false);
+  const [textoResumoVales, setTextoResumoVales] = useState('');
   const [modalDetalhes, setModalDetalhes] = useState(null); 
   const [modalConfigBeneficios, setModalConfigBeneficios] = useState(false); 
   const [modalConfigGeral, setModalConfigGeral] = useState(false);
@@ -1922,8 +1924,8 @@ const realizarLogin = async (perfil) => {
       )}
     </div>
 
-    {/* --- NOVO BOTÃO DE RELATÓRIO GERAL --- */}
-    <button onClick={copiarExtratoGeral} className="bg-gray-800 hover:bg-gray-900 text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 shadow-sm text-sm transition-colors whitespace-nowrap">
+    {/* --- BOTÃO DE RELATÓRIO GERAL --- */}
+    <button onClick={abrirModalResumoGeral} className="bg-gray-800 hover:bg-gray-900 text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 shadow-sm text-sm transition-colors whitespace-nowrap">
       <FileText size={16}/> Resumo de Vales
     </button>
 
@@ -2252,6 +2254,35 @@ const realizarLogin = async (perfil) => {
                   </ul>
                 )}
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* --- MODAL RESUMO GERAL DE VALES --- */}
+      {modalResumoValesAberto && (
+        <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4 backdrop-blur-sm animate-fade-in print:hidden">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md p-6 animate-scale-in flex flex-col max-h-[90vh]">
+            <div className="flex justify-between items-center mb-4 border-b pb-2">
+              <h3 className="font-bold text-gray-800 text-lg flex items-center gap-2">
+                <FileText size={20} className="text-gray-600"/> Resumo Geral de Vales
+              </h3>
+              <button onClick={() => setModalResumoValesAberto(false)} className="text-gray-400 hover:text-red-500 transition-colors">
+                <X size={20}/>
+              </button>
+            </div>
+            
+            {/* CAIXA DE TEXTO COM O RESUMO */}
+            <div className="flex-1 overflow-y-auto bg-gray-50 p-4 rounded-lg border border-gray-200 mb-4 whitespace-pre-wrap font-mono text-sm text-gray-700 shadow-inner">
+              {textoResumoVales}
+            </div>
+
+            <div className="flex gap-3 mt-2">
+              <button onClick={() => setModalResumoValesAberto(false)} className="flex-1 py-3 bg-gray-200 text-gray-800 font-bold rounded-lg hover:bg-gray-300 transition-colors">
+                Fechar
+              </button>
+              <button onClick={copiarTextoResumo} className="flex-1 py-3 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2 shadow-md">
+                <Copy size={18}/> Copiar para Zap
+              </button>
             </div>
           </div>
         </div>
