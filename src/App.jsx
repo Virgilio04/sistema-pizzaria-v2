@@ -85,7 +85,6 @@ export default function App() {
   });
   const [obsAuditoria, setObsAuditoria] = useState('');
   const [modalResumoAuditoria, setModalResumoAuditoria] = useState(false);
-  const [logsAuditoria, setLogsAuditoria] = useState([]);
 
   // --- ESTADOS PARA MODAL DE TEXTO (RESUMO) ---
   const [textoResumo, setTextoResumo] = useState('');
@@ -104,19 +103,15 @@ export default function App() {
   const [mostrarResumoGeral, setMostrarResumoGeral] = useState(false);
   const [modoEdicaoFunc, setModoEdicaoFunc] = useState(false); 
   const [formFuncionario, setFormFuncionario] = useState({ id: null, nome: '', salario: '', equipe: 'Cozinha', funcao: 'Auxiliar', dependentes: 0, beneficiosAtivos: [] });
-  const [modoSelecao, setModoSelecao] = useState(false);
   const [idsSelecionados, setIdsSelecionados] = useState([]);
-  const [modalMassa, setModalMassa] = useState(null);
 
   // ESTADOS GERAIS
   const [percentualPagamento, setPercentualPagamento] = useState(60); 
   const [filtroMes, setFiltroMes] = useState(new Date().toISOString().slice(0, 7));
-  const [buscaHistorico, setBuscaHistorico] = useState('');
    
   // MODAIS
   const [modalAviso, setModalAviso] = useState(null); 
   const [modalDetalhes, setModalDetalhes] = useState(null); 
-  const [modalConfigBeneficios, setModalConfigBeneficios] = useState(false); 
   const [modalConfigGeral, setModalConfigGeral] = useState(false);
 
   // Transação Atual
@@ -502,10 +497,6 @@ export default function App() {
     .filter(t => t.categoria === 'venda_cartao')
     .reduce((acc, t) => acc + t.valor, 0);
 
-  // VARIÁVEIS TEMPORÁRIAS (Não apague, elas evitam que a tela quebre por enquanto)
-  const totalEntradasTon = totaisMaquinetasSistema['Ton'] || 0;
-  const totalEntradasCielo = totaisMaquinetasSistema['Cielo'] || 0;
-
   const totalEntradasTuna = transacoes.filter(t => t.categoria === 'venda_tuna').reduce((acc, t) => acc + t.valor, 0);
   const totalEntradasIfood = transacoes.filter(t => t.categoria === 'venda_ifood').reduce((acc, t) => acc + t.valor, 0);
   
@@ -557,10 +548,6 @@ export default function App() {
   const difTuna = totalFisicoTuna - totalEntradasTuna;
   const difIfood = totalFisicoIfood - totalEntradasIfood;
   const difGeral = difDinheiro + difCartao + difTuna + difIfood;
-
-  // VARIÁVEIS TEMPORÁRIAS (Evita quebrar a tela)
-  const difTon = diferencasMaquinetas['Ton'] || 0;
-  const difCielo = diferencasMaquinetas['Cielo'] || 0;
 
   const getStatusDiferenca = (diff) => {
     if (Math.abs(diff) < 0.50) return { cor: 'text-green-600', bg: 'bg-green-100', icon: <CheckCircle size={16}/>, msg: 'Ok' };
