@@ -479,11 +479,22 @@ export default function App() {
 
   const totalEntradasDinheiro = transacoes.filter(t => t.categoria === 'venda_dinheiro').reduce((acc, t) => acc + t.valor, 0);
   
-  // Totais por Maquineta (Sistema)
-  const totalEntradasTon = transacoes.filter(t => t.categoria === 'venda_cartao' && t.maquineta === 'Ton').reduce((acc, t) => acc + t.valor, 0);
-  const totalEntradasCielo = transacoes.filter(t => t.categoria === 'venda_cartao' && t.maquineta === 'Cielo').reduce((acc, t) => acc + t.valor, 0);
-  const totalEntradasOutrasMaq = transacoes.filter(t => t.categoria === 'venda_cartao' && !['Ton', 'Cielo'].includes(t.maquineta)).reduce((acc, t) => acc + t.valor, 0);
-  const totalEntradasCartao = totalEntradasTon + totalEntradasCielo + totalEntradasOutrasMaq;
+  // --- CÁLCULO DINÂMICO DE MAQUINETAS (NOVO MOTOR) ---
+  const totaisMaquinetasSistema = {};
+  marcasMaquinetas.forEach(marca => {
+    totaisMaquinetasSistema[marca] = transacoes
+      .filter(t => t.categoria === 'venda_cartao' && t.maquineta === marca)
+      .reduce((acc, t) => acc + t.valor, 0);
+  });
+
+  // Pega TODO o cartão (mesmo se você apagar a maquineta da lista no futuro)
+  const totalEntradasCartao = transacoes
+    .filter(t => t.categoria === 'venda_cartao')
+    .reduce((acc, t) => acc + t.valor, 0);
+
+  // VARIÁVEIS TEMPORÁRIAS (Não apague, elas evitam que a tela quebre por enquanto)
+  const totalEntradasTon = totaisMaquinetasSistema['Ton'] || 0;
+  const totalEntradasCielo = totaisMaquinetasSistema['Cielo'] || 0;
 
   const totalEntradasTuna = transacoes.filter(t => t.categoria === 'venda_tuna').reduce((acc, t) => acc + t.valor, 0);
   const totalEntradasIfood = transacoes.filter(t => t.categoria === 'venda_ifood').reduce((acc, t) => acc + t.valor, 0);
@@ -520,20 +531,26 @@ export default function App() {
   const totalFisicoTuna = parseFloat(conferenciaFisica.tunaConferido || 0);
   const totalFisicoIfood = parseFloat(conferenciaFisica.ifoodConferido || 0);
   
-  // Físico por Maquineta
-  const totalFisicoTon = parseFloat(conferenciaFisica.valoresMaquinetas['Ton'] || 0);
-  const totalFisicoCielo = parseFloat(conferenciaFisica.valoresMaquinetas['Cielo'] || 0);
+  // --- DIFERENÇAS DINÂMICAS DE MAQUINETAS (NOVO MOTOR) ---
   const totalFisicoCartao = Object.values(conferenciaFisica.valoresMaquinetas).reduce((acc, val) => acc + (parseFloat(val) || 0), 0);
-  
   const totalFisicoGeral = totalFisicoDinheiro + totalFisicoTuna + totalFisicoIfood + totalFisicoCartao;
+
+  const diferencasMaquinetas = {};
+  marcasMaquinetas.forEach(marca => {
+    const fisico = parseFloat(conferenciaFisica.valoresMaquinetas[marca] || 0);
+    const sistema = totaisMaquinetasSistema[marca] || 0;
+    diferencasMaquinetas[marca] = fisico - sistema;
+  });
 
   const difDinheiro = totalFisicoDinheiro - saldoFinalCaixaTeorico; 
   const difCartao = totalFisicoCartao - totalEntradasCartao;
-  const difTon = totalFisicoTon - totalEntradasTon;
-  const difCielo = totalFisicoCielo - totalEntradasCielo;
   const difTuna = totalFisicoTuna - totalEntradasTuna;
   const difIfood = totalFisicoIfood - totalEntradasIfood;
   const difGeral = difDinheiro + difCartao + difTuna + difIfood;
+
+  // VARIÁVEIS TEMPORÁRIAS (Evita quebrar a tela)
+  const difTon = diferencasMaquinetas['Ton'] || 0;
+  const difCielo = diferencasMaquinetas['Cielo'] || 0;
 
   const getStatusDiferenca = (diff) => {
     if (Math.abs(diff) < 0.50) return { cor: 'text-green-600', bg: 'bg-green-100', icon: <CheckCircle size={16}/>, msg: 'Ok' };
