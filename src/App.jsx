@@ -508,6 +508,9 @@ export default function App() {
   // O sistema agora só subtrai da gaveta o que realmente saiu em dinheiro físico.
   // Se foi pago no PIX, o dinheiro continua na gaveta, então não subtraímos aqui.
   const saldoFinalCaixaTeorico = saldoInicial + totalEntradasDinheiro - totalSaidasGaveta;
+  // --- DINHEIRO LÍQUIDO DO DIA (Para o Card Visual) ---
+  // Apenas o que rendeu hoje (Vendas - Saídas), ignorando o Fundo de Troco
+  const dinheiroLiquidoDoDia = totalEntradasDinheiro - totalSaidasGaveta;
 
   // 2. Saldo Financeiro TOTAL (Relatório)
   const saldoFinanceiroTotal = saldoInicial + faturamentoTotalApp - totalSaidas;
