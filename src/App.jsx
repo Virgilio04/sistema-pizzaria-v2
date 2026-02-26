@@ -6,7 +6,7 @@ import {
   LogOut, Shield, UserCheck, Scale, Monitor, Edit2, ChefHat, 
   Utensils, UserPlus, X, AlertTriangle, ListChecks, 
   Percent, Award, CalendarX, AlertOctagon, ArrowRightLeft, 
-  Filter, FileSpreadsheet, Copy, Briefcase, Baby, Bike
+  Filter, FileSpreadsheet, Copy, Briefcase, Baby, Bike, Settings
 } from 'lucide-react';
 
 export default function App() {
@@ -55,7 +55,16 @@ export default function App() {
     ]
   });
 
-  const [marcasMaquinetas, setMarcasMaquinetas] = useState(['Stone', 'Ton', 'Mercado Pago']);
+  // PARA ADICIONAR NOVAS MAQUININHAS/MAQUINETAS
+  // Salva as maquinetas na memória do navegador para não sumir ao atualizar
+  const [marcasMaquinetas, setMarcasMaquinetas] = useState(() => {
+    const salvas = localStorage.getItem('pizzaria_maquinetas');
+    return salvas ? JSON.parse(salvas) : ['Ton', 'Cielo'];
+  });
+
+  useEffect(() => {
+    localStorage.setItem('pizzaria_maquinetas', JSON.stringify(marcasMaquinetas));
+  }, [marcasMaquinetas]);
   const [novaMarca, setNovaMarca] = useState('');
 
   // --- CONFIGURAÇÃO DE BENEFÍCIOS (RH) ---
@@ -1348,6 +1357,11 @@ const realizarLogin = async (perfil) => {
           </div>
           <div className="flex items-center gap-3">
              <div className="flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-lg backdrop-blur-sm"><Calendar size={16} /><input type="date" value={dataMovimento} onChange={(e) => setDataMovimento(e.target.value)} className="bg-transparent border-none text-white font-bold focus:ring-0 cursor-pointer p-0 text-sm w-28"/></div>
+             {usuarioAtual.role === 'gerente' && (
+                <button onClick={() => setModalConfigGeral(true)} className="bg-white/10 hover:bg-blue-600 p-2 rounded-lg transition-colors" title="Configurações">
+                  <Settings size={18} />
+                </button>
+             )}
              <button onClick={() => {setUsuarioAtual(null); setInputPin('');}} className="bg-white/10 hover:bg-red-600 p-2 rounded-lg transition-colors" title="Sair"><LogOut size={18} /></button>
           </div>
         </div>
@@ -2063,6 +2077,53 @@ const realizarLogin = async (perfil) => {
     </div>
   </div>
 )}
+{/* --- MODAL DE CONFIGURAÇÃO DE MAQUINETAS --- */}
+      {modalConfigGeral && (
+        <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4 backdrop-blur-sm animate-fade-in print:hidden">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md p-6 animate-scale-in">
+            <div className="flex justify-between items-center mb-4 border-b pb-2">
+              <h3 className="font-bold text-gray-800 text-lg flex items-center gap-2">
+                <Settings size={20} className="text-gray-600"/> Configurar Maquinetas
+              </h3>
+              <button onClick={() => setModalConfigGeral(false)} className="text-gray-400 hover:text-red-500"><X size={20}/></button>
+            </div>
+
+            <div className="space-y-4">
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="Nome (Ex: Stone, PagSeguro)"
+                  className="flex-1 p-2 border border-gray-300 rounded outline-none focus:ring-2 focus:ring-blue-500"
+                  value={novaMarca}
+                  onChange={(e) => setNovaMarca(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && adicionarMarcaMaquineta()}
+                />
+                <button onClick={adicionarMarcaMaquineta} className="bg-blue-600 text-white px-4 py-2 rounded font-bold hover:bg-blue-700 transition-colors">
+                  Adicionar
+                </button>
+              </div>
+
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 max-h-60 overflow-y-auto">
+                <p className="text-xs font-bold text-gray-500 uppercase mb-2">Maquinetas Ativas</p>
+                {marcasMaquinetas.length === 0 ? (
+                  <p className="text-sm text-gray-400 text-center py-4">Nenhuma maquineta cadastrada.</p>
+                ) : (
+                  <ul className="space-y-2">
+                    {marcasMaquinetas.map(marca => (
+                      <li key={marca} className="flex justify-between items-center bg-white p-2 border border-gray-100 rounded shadow-sm">
+                        <span className="font-bold text-gray-700 flex items-center gap-2"><CreditCard size={16} className="text-blue-500"/> {marca}</span>
+                        <button onClick={() => removerMarcaMaquineta(marca)} className="text-red-500 hover:bg-red-50 p-1.5 rounded transition-colors" title="Remover">
+                          <Trash2 size={16}/>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       {/* --- VISUALIZADOR DE SENHA (BOTÃO FLUTUANTE) --- */}
       {usuarioAtual && usuarioAtual.role === 'gerente' && (
         <div className="fixed bottom-4 right-4 bg-gray-900 text-white p-3 rounded-lg shadow-xl z-50 flex items-center gap-3 border border-gray-700 animate-slide-up print:hidden">
