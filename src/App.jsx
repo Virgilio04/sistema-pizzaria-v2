@@ -823,6 +823,27 @@ ${listaMovimentacoes.length > 0 ? listaMovimentacoes : '(Nenhuma movimentação)
     });
   };
 
+  // --- FUNÇÃO PARA EXCLUIR FUNCIONÁRIO ---
+  const excluirFuncionario = async (id, nome) => {
+    // Confirmação dupla para não apagar sem querer
+    const confirmacao = window.confirm(`ATENÇÃO: Tem certeza que deseja excluir o(a) colaborador(a) ${nome}? Essa ação não pode ser desfeita.`);
+    
+    if (confirmacao) {
+      const { error } = await supabase
+        .from('funcionarios')
+        .delete()
+        .eq('id', id);
+
+      if (error) {
+        console.error('Erro ao excluir funcionário:', error);
+        setModalAviso({ titulo: "Erro", msg: "Não foi possível excluir. Ele pode estar atrelado a pendências no sistema.", tipo: 'error' });
+      } else {
+        setModalAviso({ titulo: "Sucesso", msg: "Colaborador excluído com sucesso!", tipo: 'success' });
+        fetchFuncionarios(); // Atualiza a lista na tela na hora
+      }
+    }
+  };
+
   const salvarFuncionario = async (e) => {
     e.preventDefault();
 
@@ -1933,6 +1954,8 @@ const realizarLogin = async (perfil) => {
   <FileText size={16}/>
 </button>
             <button onClick={() => prepararEdicao(f)} className="p-1.5 text-gray-400 hover:text-orange-600 hover:bg-orange-50 rounded transition-colors" title="Editar"><Edit2 size={16}/></button>
+            {/* --- BOTÃO DE EXCLUIR NOVO AQUI --- */}
+            <button onClick={() => excluirFuncionario(f.id, f.nome)} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Excluir Colaborador"><Trash2 size={16}/></button>
         </div>
     </div>
 
