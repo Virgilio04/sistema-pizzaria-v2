@@ -1491,6 +1491,7 @@ const realizarLogin = async (perfil) => {
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4 print:hidden">
                 <div className="bg-white p-4 rounded-xl shadow-sm border-t-4 border-green-600"><h3 className="text-gray-500 text-[10px] font-bold uppercase flex items-center gap-1"><DollarSign size={12}/> Entradas</h3><div className="mt-1 text-2xl font-bold text-gray-800">{BRL(faturamentoTotalApp)}</div></div>
                 <div className="bg-white p-4 rounded-xl shadow-sm border-t-4 border-gray-800"><h3 className="text-gray-500 text-[10px] font-bold uppercase flex items-center gap-1"><Wallet size={12}/> Dinheiro Líquido (Recolher)</h3><div className={`mt-1 text-2xl font-bold ${dinheiroLiquidoDoDia >= 0 ? 'text-gray-900' : 'text-red-600'}`}>{BRL(dinheiroLiquidoDoDia)}</div></div>
+                <div className="bg-white p-4 rounded-xl shadow-sm border-t-4 border-red-500"><h3 className="text-gray-500 text-[10px] font-bold uppercase">Saídas</h3><div className="mt-1 text-2xl font-bold text-red-600">{BRL(totalSaidas)}</div></div>
                 <div className="bg-white p-4 rounded-xl shadow-sm border-t-4 border-indigo-400"><h3 className="text-gray-500 text-[10px] font-bold uppercase">Troco Inicial</h3><div className="mt-1 text-xl font-bold text-indigo-900">{BRL(saldoInicial)}</div></div>
               </div>
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 print:hidden">
