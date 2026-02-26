@@ -101,6 +101,7 @@ export default function App() {
   const [funcionarios, setFuncionarios] = useState([]);
   const [funcionarioSelecionado, setFuncionarioSelecionado] = useState('');
   const [mostrarFormFuncionario, setMostrarFormFuncionario] = useState(false);
+  const [mostrarResumoGeral, setMostrarResumoGeral] = useState(false);
   const [modoEdicaoFunc, setModoEdicaoFunc] = useState(false); 
   const [formFuncionario, setFormFuncionario] = useState({ id: null, nome: '', salario: '', equipe: 'Cozinha', funcao: 'Auxiliar', dependentes: 0, beneficiosAtivos: [] });
   const [modoSelecao, setModoSelecao] = useState(false);
@@ -790,8 +791,8 @@ ${listaMovimentacoes.length > 0 ? listaMovimentacoes : '(Nenhuma movimentação)
     }
   };
 
-  // --- FUNÇÃO COPIAR RESUMO GERAL DE VALES (WHATSAPP) ---
-  const copiarExtratoGeral = () => {
+  // --- FUNÇÕES DE RESUMO GERAL DE VALES ---
+  const gerarTextoResumoGeral = () => {
     const periodo = getPeriodoAtual(dataMovimento);
     let texto = `📋 *RESUMO GERAL DE VALES*\n`;
     texto += `📅 Período: ${periodo.inicio} até ${periodo.fim}\n`;
@@ -800,9 +801,7 @@ ${listaMovimentacoes.length > 0 ? listaMovimentacoes : '(Nenhuma movimentação)
     let totalGeral = 0;
     const equipes = ['Cozinha', 'Salão', 'Diarista', 'Motoboy'];
 
-    // Varre equipe por equipe para ficar organizado
     equipes.forEach(eq => {
-      // Pega só a galera dessa equipe que tem vale > 0
       const funcDaEquipe = dadosFolha.filter(f => f.equipe === eq && f.totalVales > 0);
       
       if (funcDaEquipe.length > 0) {
@@ -814,13 +813,18 @@ ${listaMovimentacoes.length > 0 ? listaMovimentacoes : '(Nenhuma movimentação)
       }
     });
 
-    if (totalGeral === 0) {
-       return setModalAviso({ titulo: "Aviso", msg: "Ninguém pegou vale neste período.", tipo: 'success' });
-    }
+    if (totalGeral === 0) return "Ninguém pegou vale neste período.";
 
     texto += `\n--------------------------------\n`;
     texto += `💰 *TOTAL DE DESCONTOS: ${BRL(totalGeral)}*`;
+    return texto;
+  };
 
+  const copiarTextoResumoGeral = () => {
+    const texto = gerarTextoResumoGeral();
+    if (texto === "Ninguém pegou vale neste período.") {
+        return setModalAviso({ titulo: "Aviso", msg: "Não há vales para copiar.", tipo: 'error' });
+    }
     if (navigator.clipboard) {
       navigator.clipboard.writeText(texto).then(() => {
         setModalAviso({ titulo: "Copiado!", msg: "Resumo geral copiado para o WhatsApp.", tipo: 'success' });
@@ -1922,16 +1926,39 @@ const realizarLogin = async (perfil) => {
       )}
     </div>
 
-    {/* --- NOVO BOTÃO DE RELATÓRIO GERAL --- */}
-    <button onClick={copiarExtratoGeral} className="bg-gray-800 hover:bg-gray-900 text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 shadow-sm text-sm transition-colors whitespace-nowrap">
-      <FileText size={16}/> Resumo de Vales
+    {/* --- BOTÃO DE RELATÓRIO GERAL --- */}
+    <button onClick={() => { setMostrarResumoGeral(!mostrarResumoGeral); setMostrarFormFuncionario(false); }} className={`px-4 py-2 rounded-lg font-bold flex items-center gap-2 shadow-sm text-sm transition-colors whitespace-nowrap ${mostrarResumoGeral ? 'bg-gray-200 text-gray-800' : 'bg-gray-800 hover:bg-gray-900 text-white'}`}>
+      {mostrarResumoGeral ? <X size={16}/> : <FileText size={16}/>} {mostrarResumoGeral ? 'Fechar Resumo' : 'Resumo de Vales'}
     </button>
 
-    <button onClick={() => { setFormFuncionario({ id: null, nome: '', salario: '', equipe: 'Cozinha', funcao: 'Auxiliar', dependentes: 0, beneficiosAtivos: [] }); setModoEdicaoFunc(false); setMostrarFormFuncionario(!mostrarFormFuncionario); }} className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 shadow-sm text-sm transition-colors whitespace-nowrap">
-      {mostrarFormFuncionario ? 'Cancelar' : 'Novo Colaborador'} {mostrarFormFuncionario ? <X size={16}/> : <UserPlus size={16}/>}
+    <button onClick={() => { setFormFuncionario({ id: null, nome: '', salario: '', equipe: 'Cozinha', funcao: 'Auxiliar', dependentes: 0, beneficiosAtivos: [] }); setModoEdicaoFunc(false); setMostrarFormFuncionario(!mostrarFormFuncionario); setMostrarResumoGeral(false); }} className={`px-4 py-2 rounded-lg font-bold flex items-center gap-2 shadow-sm text-sm transition-colors whitespace-nowrap ${mostrarFormFuncionario ? 'bg-green-100 text-green-800' : 'bg-green-600 hover:bg-green-700 text-white'}`}>
+      {mostrarFormFuncionario ? <X size={16}/> : <UserPlus size={16}/>} {mostrarFormFuncionario ? 'Cancelar' : 'Novo Colaborador'}
     </button>
   </div>
 </div>
+
+{/* --- EXPANSÃO DO RESUMO GERAL DE VALES --- */}
+               {mostrarResumoGeral && (
+                 <div className="bg-white p-6 rounded-xl border-l-4 border-gray-800 shadow-md animate-slide-down mb-6">
+                    <div className="flex justify-between items-center mb-4 border-b pb-2">
+                      <h3 className="font-bold text-gray-800 flex items-center gap-2">
+                        <FileText size={20} className="text-gray-800"/> Visualização Rápida - Vales do Ciclo
+                      </h3>
+                    </div>
+                    
+                    {/* CAIXA DE TEXTO */}
+                    <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 whitespace-pre-wrap font-mono text-sm text-gray-700 max-h-60 overflow-y-auto shadow-inner">
+                      {gerarTextoResumoGeral()}
+                    </div>
+                    
+                    {/* BOTÃO COPIAR */}
+                    <div className="flex justify-end mt-4">
+                       <button onClick={copiarTextoResumoGeral} className="bg-green-600 hover:bg-green-700 text-white font-bold px-6 py-2 rounded-lg shadow-md flex items-center gap-2 transition-colors">
+                         <Copy size={16}/> Copiar para WhatsApp
+                       </button>
+                    </div>
+                 </div>
+               )}
 
                {mostrarFormFuncionario && (
                  <div className="bg-white p-6 rounded-xl border-l-4 border-green-500 shadow-md animate-slide-down">
