@@ -120,6 +120,16 @@ export default function App() {
   const [transacoesRH, setTransacoesRH] = useState([]);
   const [saidaViaPix, setSaidaViaPix] = useState(false);
 
+  // --- ESTADOS DO NOVO PAINEL DE ENTREGAS (MOTOBOYS) ---
+  const [entregasPendentes, setEntregasPendentes] = useState([]);
+  const [formEntrega, setFormEntrega] = useState({
+    motoboyId: '',
+    pedidoNumero: '',
+    valorPedido: '',
+    formaPagamento: 'Dinheiro',
+    trocoEnviado: ''
+  });
+  
   // --- ESTADOS ESPECÍFICOS PARA MOTOBOY ---
   const [motoQtd, setMotoQtd] = useState('');
   const [motoValorEntregas, setMotoValorEntregas] = useState(''); // Você digita o valor total
@@ -177,9 +187,10 @@ export default function App() {
     return () => { supabase.removeChannel(channel); }
   }, [dataMovimento]);
 
-  // 2. Carregar Funcionários
+  // 2. Carregar Funcionários e Entregas
   useEffect(() => {
     fetchFuncionarios();
+    fetchEntregas();
   }, []);
 
   // 3. Carregar Histórico
@@ -217,6 +228,19 @@ export default function App() {
     
     if (error) console.error('Erro ao buscar transações:', error);
     else setTransacoes(data || []);
+  };
+
+  // Busca as entregas que estão na rua
+  const fetchEntregas = async () => {
+    // Fazemos um "join" com a tabela de funcionários para já trazer o nome do motoboy
+    const { data, error } = await supabase
+      .from('entregas_pendentes')
+      .select(`*, funcionarios(nome)`)
+      .eq('status', 'pendente')
+      .order('data_criacao', { ascending: true });
+
+    if (error) console.error('Erro ao buscar entregas:', error);
+    else setEntregasPendentes(data || []);
   };
 
   const fetchFuncionarios = async () => {
@@ -1144,6 +1168,9 @@ const realizarLogin = async (perfil) => {
           <div className="flex items-center gap-3"><div className={`p-2 rounded-full ${usuarioAtual.role === 'gerente' ? 'bg-blue-600' : 'bg-red-700'}`}>{usuarioAtual.role === 'gerente' ? <Shield size={20}/> : <UserCheck size={20}/>}</div><div><h1 className="text-lg font-bold flex items-center gap-2">Pizzaria CashFlow <span className="text-[10px] bg-white/20 px-2 rounded">ONLINE</span><span className="text-xs font-normal opacity-70 ml-2 border-l pl-2">{usuarioAtual.nome}</span></h1></div></div>
           <div className="flex bg-black/20 p-1 rounded-lg overflow-x-auto max-w-full no-scrollbar">
             <button onClick={() => setActiveTab('caixa')} className={`px-3 py-2 rounded-md text-xs md:text-sm font-bold transition-all whitespace-nowrap ${activeTab === 'caixa' ? 'bg-white text-gray-800 shadow' : 'text-gray-200 hover:text-white'}`}>Fluxo de Caixa</button>
+            <button onClick={() => setActiveTab('entregas')} className={`px-3 py-2 rounded-md text-xs md:text-sm font-bold transition-all whitespace-nowrap flex items-center gap-1 ${activeTab === 'entregas' ? 'bg-white text-gray-800 shadow' : 'text-gray-200 hover:text-white'}`}>
+              <Bike size={14}/> Entregas
+            </button>
             <button onClick={() => setActiveTab('auditoria')} className={`px-3 py-2 rounded-md text-xs md:text-sm font-bold transition-all whitespace-nowrap flex items-center gap-1 ${activeTab === 'auditoria' ? 'bg-white text-gray-800 shadow' : 'text-gray-200 hover:text-white'}`}><Scale size={14}/> Auditoria</button>
             {usuarioAtual.role === 'gerente' && (
               <>
