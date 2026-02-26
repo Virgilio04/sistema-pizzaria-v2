@@ -593,14 +593,20 @@ export default function App() {
       return `${t.hora} | ${simbolo} ${BRL(t.valor)} | ${descFinal}${extraInfo}${tagPix}`;
     }).join('\n');
 
+    // --- GERA A LISTA DINÂMICA DE MAQUINETAS PARA O ZAP ---
+    const listaMaquinetasTexto = marcasMaquinetas.map((marca, index) => {
+      const isLast = index === marcasMaquinetas.length - 1;
+      return `   ${isLast ? '└─' : '├─'} ${marca}: ${BRL(totaisMaquinetasSistema[marca] || 0)}`;
+    }).join('\n');
+
     const texto = `🍕 FECHAMENTO PIZZARIA - ${new Date(dataMovimento).toLocaleDateString('pt-BR')}
 👤 Resp: ${usuarioAtual.nome}
 
 💰 Faturamento Total: ${BRL(faturamentoTotalApp)}
 💵 Dinheiro: ${BRL(totalEntradasDinheiro)}
 💳 Cartão: ${BRL(totalEntradasCartao)}
-   ├─ Ton: ${BRL(totalEntradasTon)}
-   └─ Cielo: ${BRL(totalEntradasCielo)}
+${listaMaquinetasTexto}
+🎫 Tuna: ${BRL(totalEntradasTuna)}
 🎫 Tuna: ${BRL(totalEntradasTuna)}
 🛵 iFood: ${BRL(totalEntradasIfood)}
 
@@ -934,12 +940,20 @@ ${listaMovimentacoes.length > 0 ? listaMovimentacoes : '(Nenhuma movimentação)
           sistema: { 
             dinheiro: saldoFinalCaixaTeorico, 
             cartao: totalEntradasCartao, 
-            ton: totalEntradasTon,
-            cielo: totalEntradasCielo,
+            maquinetasDetalhadas: totaisMaquinetasSistema, // <-- NOVO: Salva tudo dinâmico
             tuna: totalEntradasTuna,
             ifood: totalEntradasIfood
           },
-          diferencas: { total: difGeral, detalhes: { dinheiro: difDinheiro, cartao: difCartao, ton: difTon, cielo: difCielo, tuna: difTuna, ifood: difIfood } },
+          diferencas: { 
+            total: difGeral, 
+            detalhes: { 
+              dinheiro: difDinheiro, 
+              cartao: difCartao, 
+              maquinetasDetalhadas: diferencasMaquinetas, // <-- NOVO: Salva diferenças dinâmicas
+              tuna: difTuna, 
+              ifood: difIfood 
+            } 
+          },
           obs: obsAuditoria 
       },
       resumoFinanceiro: { 
