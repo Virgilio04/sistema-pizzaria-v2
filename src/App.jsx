@@ -1940,23 +1940,61 @@ const realizarLogin = async (perfil) => {
 {/* --- EXPANSÃO DO RESUMO GERAL DE VALES --- */}
                {mostrarResumoGeral && (
                  <div className="bg-white p-6 rounded-xl border-l-4 border-gray-800 shadow-md animate-slide-down mb-6">
-                    <div className="flex justify-between items-center mb-4 border-b pb-2">
-                      <h3 className="font-bold text-gray-800 flex items-center gap-2">
-                        <FileText size={20} className="text-gray-800"/> Visualização Rápida - Vales do Ciclo
+                    <div className="flex justify-between items-center mb-6 border-b pb-4">
+                      <h3 className="font-bold text-gray-800 text-lg flex items-center gap-2">
+                        <FileText size={20} className="text-gray-800"/> Resumo de Vales do Ciclo
                       </h3>
+                      {/* BOTÃO COPIAR FICA AQUI NO TOPO */}
+                      <button onClick={copiarTextoResumoGeral} className="bg-green-600 hover:bg-green-700 text-white font-bold px-4 py-2 rounded-lg shadow-sm flex items-center gap-2 transition-colors text-sm">
+                        <Copy size={16}/> Copiar Resumo (WhatsApp)
+                      </button>
                     </div>
                     
-                    {/* CAIXA DE TEXTO */}
-                    <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 whitespace-pre-wrap font-mono text-sm text-gray-700 max-h-60 overflow-y-auto shadow-inner">
-                      {gerarTextoResumoGeral()}
+                    {/* CARDS VISUAIS DIVIDIDOS POR EQUIPE */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {['Cozinha', 'Salão', 'Diarista', 'Motoboy'].map(eq => {
+                        // Filtra só quem pegou vale dessa equipe
+                        const funcDaEquipe = dadosFolha.filter(f => f.equipe === eq && f.totalVales > 0);
+                        if (funcDaEquipe.length === 0) return null; // Se não tem ninguém com vale, esconde o card
+
+                        return (
+                          <div key={eq} className="bg-gray-50 rounded-xl p-4 border border-gray-200 shadow-sm">
+                            <h4 className="font-bold text-gray-700 mb-3 uppercase text-xs border-b pb-2 flex items-center gap-2">
+                              {eq === 'Cozinha' ? <ChefHat size={14}/> : eq === 'Salão' ? <Utensils size={14}/> : eq === 'Motoboy' ? <Bike size={14}/> : <Briefcase size={14}/>} 
+                              Equipe {eq}
+                            </h4>
+                            <div className="space-y-2">
+                              {funcDaEquipe.map(f => (
+                                <div key={f.id} className="flex justify-between items-center bg-white p-2.5 rounded border border-gray-100 hover:border-blue-200 transition-colors">
+                                  <span className="font-bold text-gray-700 text-sm">{f.nome}</span>
+                                  <span className="font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded border border-red-100">
+                                    {BRL(f.totalVales)}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
-                    
-                    {/* BOTÃO COPIAR */}
-                    <div className="flex justify-end mt-4">
-                       <button onClick={copiarTextoResumoGeral} className="bg-green-600 hover:bg-green-700 text-white font-bold px-6 py-2 rounded-lg shadow-md flex items-center gap-2 transition-colors">
-                         <Copy size={16}/> Copiar para WhatsApp
-                       </button>
-                    </div>
+
+                    {/* SE NINGUÉM PEGOU VALE */}
+                    {dadosFolha.filter(f => f.totalVales > 0).length === 0 && (
+                      <div className="text-center py-8 text-gray-400 font-medium bg-gray-50 rounded-lg border border-dashed border-gray-300">
+                        <CheckCircle size={32} className="mx-auto mb-2 text-gray-300"/>
+                        Nenhum vale registrado neste ciclo.
+                      </div>
+                    )}
+
+                    {/* TOTALIZADOR GERAL NO RODAPÉ */}
+                    {dadosFolha.filter(f => f.totalVales > 0).length > 0 && (
+                      <div className="mt-6 pt-4 border-t flex justify-end">
+                        <div className="bg-red-50 text-red-800 px-6 py-3 rounded-xl border border-red-200 flex items-center gap-4 shadow-sm">
+                          <span className="text-xs font-bold uppercase tracking-wide text-red-600">Total a Descontar:</span>
+                          <span className="text-2xl font-black">{BRL(dadosFolha.reduce((acc, f) => acc + f.totalVales, 0))}</span>
+                        </div>
+                      </div>
+                    )}
                  </div>
                )}
 
