@@ -301,6 +301,77 @@ export default function App() {
     }
   };
 
+  // Função que finaliza a rota do motoboy e joga o dinheiro no caixa
+  const finalizarAcertoMotoboy = async (motoboyId, nomeMotoboy, entregas) => {
+    if (!confirm(`Confirmar o acerto de ${nomeMotoboy}? Isso vai lançar os valores no Fluxo de Caixa do dia.`)) return;
+
+    // 1. Separa o que foi Dinheiro e o que foi Cartão
+    let totalDinheiro = 0;
+    let totalCartao = 0;
+    
+    entregas.forEach(ent => {
+      if (ent.forma_pagamento === 'Dinheiro') {
+        totalDinheiro += Number(ent.valor_pedido);
+      } else {
+        totalCartao += Number(ent.valor_pedido);
+      }
+    });
+
+    const novasTransacoes = [];
+    const horaAtual = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+    // 2. Prepara o lançamento do Dinheiro
+    if (totalDinheiro > 0) {
+      novasTransacoes.push({
+        hora: horaAtual,
+        descricao: `Moto: ${nomeMotoboy} - Acerto Entregas`,
+        valor: totalDinheiro,
+        categoria: 'venda_dinheiro',
+        tipo: 'entrada',
+        data_movimento: dataMovimento,
+        forma_pagamento: 'dinheiro'
+      });
+    }
+
+    // 3. Prepara o lançamento do Cartão
+    if (totalCartao > 0) {
+      // Pergunta a maquineta rapidinho para não desorganizar o seu fechamento de cartão
+      let maq = prompt(`As vendas no cartão de ${nomeMotoboy} deram R$ ${totalCartao.toFixed(2)}. Qual maquineta ele usou? (Digite: Ton ou Cielo)`);
+      if (!maq) maq = 'Ton'; // Define 'Ton' como padrão se você só der 'OK' ou fechar
+
+      novasTransacoes.push({
+        hora: horaAtual,
+        descricao: `Moto: ${nomeMotoboy} - Acerto Entregas`,
+        valor: totalCartao,
+        categoria: 'venda_cartao',
+        tipo: 'entrada',
+        maquineta: maq,
+        data_movimento: dataMovimento,
+        forma_pagamento: 'dinheiro' 
+      });
+    }
+
+    // 4. Salva tudo no Fluxo de Caixa (Tabela transacoes)
+    if (novasTransacoes.length > 0) {
+      const { error: erroTransacao } = await supabase.from('transacoes').insert(novasTransacoes);
+      if (erroTransacao) return setModalAviso({ titulo: "Erro", msg: "Erro ao lançar no caixa.", tipo: 'error' });
+    }
+
+    // 5. Baixa as entregas (Muda o status para concluído)
+    const ids = entregas.map(e => e.id);
+    const { error: erroUpdate } = await supabase
+      .from('entregas_pendentes')
+      .update({ status: 'concluido' })
+      .in('id', ids);
+
+    if (erroUpdate) return setModalAviso({ titulo: "Erro", msg: "Erro ao limpar entregas do motoboy.", tipo: 'error' });
+
+    // 6. Sucesso! Atualiza tudo.
+    setModalAviso({ titulo: "Acerto Concluído!", msg: `O acerto de ${nomeMotoboy} foi lançado no caixa com sucesso.`, tipo: 'success' });
+    fetchEntregas();   // Limpa o cartão do motoboy
+    fetchTransacoes(); // Atualiza a tela de Fluxo de Caixa
+  };
+
   // Agrupa as entregas por motoboy para mostrar nos cartões
   const entregasAgrupadas = entregasPendentes.reduce((acc, entrega) => {
     if (!acc[entrega.funcionario_id]) {
@@ -1396,7 +1467,10 @@ const realizarLogin = async (perfil) => {
                             )}
                           </div>
                           
-                          <button className="w-full mt-2 bg-gray-800 hover:bg-gray-900 text-white font-bold py-2 rounded transition-colors text-sm">
+                          <button 
+                            onClick={() => finalizarAcertoMotoboy(motoboyId, dados.nome, dados.entregas)} 
+                            className="w-full mt-2 bg-gray-800 hover:bg-gray-900 text-white font-bold py-2 rounded transition-colors text-sm"
+                          >
                             FAZER ACERTO FINAL
                           </button>
                         </div>
