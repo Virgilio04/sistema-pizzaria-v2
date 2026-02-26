@@ -790,6 +790,44 @@ ${listaMovimentacoes.length > 0 ? listaMovimentacoes : '(Nenhuma movimentação)
     }
   };
 
+  // --- FUNÇÃO COPIAR RESUMO GERAL DE VALES (WHATSAPP) ---
+  const copiarExtratoGeral = () => {
+    const periodo = getPeriodoAtual(dataMovimento);
+    let texto = `📋 *RESUMO GERAL DE VALES*\n`;
+    texto += `📅 Período: ${periodo.inicio} até ${periodo.fim}\n`;
+    texto += `--------------------------------\n`;
+
+    let totalGeral = 0;
+    const equipes = ['Cozinha', 'Salão', 'Diarista', 'Motoboy'];
+
+    // Varre equipe por equipe para ficar organizado
+    equipes.forEach(eq => {
+      // Pega só a galera dessa equipe que tem vale > 0
+      const funcDaEquipe = dadosFolha.filter(f => f.equipe === eq && f.totalVales > 0);
+      
+      if (funcDaEquipe.length > 0) {
+        texto += `\n*🧑‍🍳 Equipe ${eq}*\n`;
+        funcDaEquipe.forEach(f => {
+          texto += `  - ${f.nome}: ${BRL(f.totalVales)}\n`;
+          totalGeral += f.totalVales;
+        });
+      }
+    });
+
+    if (totalGeral === 0) {
+       return setModalAviso({ titulo: "Aviso", msg: "Ninguém pegou vale neste período.", tipo: 'success' });
+    }
+
+    texto += `\n--------------------------------\n`;
+    texto += `💰 *TOTAL DE DESCONTOS: ${BRL(totalGeral)}*`;
+
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(texto).then(() => {
+        setModalAviso({ titulo: "Copiado!", msg: "Resumo geral copiado para o WhatsApp.", tipo: 'success' });
+      });
+    }
+  };
+
   // --- FUNÇÃO COPIAR EXTRATO INDIVIDUAL ---
   const copiarExtratoIndividual = () => {
     // 1. Filtra os itens do funcionário no ciclo atual
@@ -1883,6 +1921,11 @@ const realizarLogin = async (perfil) => {
         </button>
       )}
     </div>
+
+    {/* --- NOVO BOTÃO DE RELATÓRIO GERAL --- */}
+    <button onClick={copiarExtratoGeral} className="bg-gray-800 hover:bg-gray-900 text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 shadow-sm text-sm transition-colors whitespace-nowrap">
+      <FileText size={16}/> Resumo de Vales
+    </button>
 
     <button onClick={() => { setFormFuncionario({ id: null, nome: '', salario: '', equipe: 'Cozinha', funcao: 'Auxiliar', dependentes: 0, beneficiosAtivos: [] }); setModoEdicaoFunc(false); setMostrarFormFuncionario(!mostrarFormFuncionario); }} className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 shadow-sm text-sm transition-colors whitespace-nowrap">
       {mostrarFormFuncionario ? 'Cancelar' : 'Novo Colaborador'} {mostrarFormFuncionario ? <X size={16}/> : <UserPlus size={16}/>}
