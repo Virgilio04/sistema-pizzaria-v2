@@ -1402,38 +1402,46 @@ const realizarLogin = async (perfil) => {
                     <div className="bg-white p-4 rounded-xl border-l-4 border-purple-500 shadow-sm h-full">
                        <h3 className="text-purple-900 font-bold flex items-center gap-2 mb-6 text-sm uppercase tracking-wide border-b border-gray-100 pb-2"><Edit2 size={18}/> 2. Contagem Física</h3>
                        <div className="mb-6">
-    <label className="block text-xs font-bold text-gray-600 mb-2 uppercase flex items-center justify-between">
-        <span className="flex items-center gap-1"><DollarSign size={14}/> Dinheiro (Gaveta)</span>
-        <button type="button" onClick={() => setMostrarCalculadora(!mostrarCalculadora)} className="text-purple-600 hover:text-purple-800 text-[10px] flex items-center gap-1 bg-purple-50 px-2 py-1 rounded border border-purple-200 transition-colors">
-            <Calculator size={12}/> {mostrarCalculadora ? 'Ocultar Calculadora' : 'Contar Notas'}
-        </button>
-    </label>
-    
-    {mostrarCalculadora && (
-        <div className="bg-purple-50/50 p-3 rounded-xl border border-purple-100 space-y-2 mb-3 animate-fade-in shadow-inner">
-            {[100, 50, 20, 10, 5, 2].map(nota => (
-                <div key={nota} className="flex justify-between items-center bg-white p-1.5 rounded-lg border border-purple-50 shadow-sm">
-                    <span className="text-sm font-bold text-gray-700 flex items-center gap-2 w-20">
-                        <span className={`w-8 h-5 rounded flex items-center justify-center text-[10px] font-bold text-white ${nota === 100 ? 'bg-blue-500' : nota === 50 ? 'bg-orange-500' : nota === 20 ? 'bg-yellow-500' : nota === 10 ? 'bg-red-500' : nota === 5 ? 'bg-purple-500' : 'bg-indigo-500'}`}>R$ {nota}</span>
-                        <span className="text-gray-400 text-xs">x</span>
-                    </span>
-                    <input type="number" min="0" className="w-16 p-1 border border-gray-200 rounded text-center text-sm font-bold text-purple-900 focus:ring-2 focus:ring-purple-500 outline-none bg-gray-50" placeholder="Qtd" value={contagemNotas[nota]} onChange={(e) => atualizarContagemNotas(nota, e.target.value)} />
-                    <span className="text-sm font-bold text-gray-800 w-24 text-right">{BRL((parseInt(contagemNotas[nota]) || 0) * nota)}</span>
-                </div>
-            ))}
-            <div className="flex justify-between items-center bg-white p-1.5 rounded-lg border border-purple-50 shadow-sm pt-2">
-                <span className="text-sm font-bold text-gray-700 flex items-center gap-2 w-20">
-                    <span className="w-8 h-5 rounded flex items-center justify-center text-[10px] font-bold text-white bg-slate-500">Moedas</span>
-                    <span className="text-gray-400 text-xs">+</span>
-                </span>
-                <input type="number" step="0.01" min="0" className="w-20 p-1 border border-gray-200 rounded text-center text-sm font-bold text-purple-900 focus:ring-2 focus:ring-purple-500 outline-none bg-gray-50" placeholder="R$ 0,00" value={contagemNotas.moedas} onChange={(e) => atualizarContagemNotas('moedas', e.target.value)} />
-                <span className="text-sm font-bold text-gray-800 w-20 text-right">{BRL(parseFloat(contagemNotas.moedas) || 0)}</span>
-            </div>
-        </div>
-    )}
+                            <label className="block text-xs font-bold text-gray-600 mb-2 uppercase flex items-center justify-between">
+                                <span className="flex items-center gap-1"><DollarSign size={14}/> Dinheiro (Gaveta)</span>
+                                <button type="button" onClick={() => setMostrarCalculadora(!mostrarCalculadora)} className="text-purple-600 hover:text-purple-800 text-[10px] flex items-center gap-1 bg-purple-50 px-2 py-1 rounded border border-purple-200 transition-colors">
+                                    <Calculator size={12}/> {mostrarCalculadora ? 'Ocultar Calculadora' : 'Contar Notas'}
+                                </button>
+                            </label>
+                            
+                            {mostrarCalculadora && (
+                                <div className="bg-gray-50 p-3 rounded-xl border border-gray-200 mb-3 animate-fade-in shadow-sm">
+                                    <div className="flex justify-between items-center mb-3 pb-2 border-b border-gray-200">
+                                        <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Calculadora de Notas</span>
+                                        
+                                        {/* --- BOTÃO ZERAR --- */}
+                                        <button type="button" onClick={() => { setContagemNotas({ 100: '', 50: '', 20: '', 10: '', 5: '', 2: '', moedas: '' }); setConferenciaFisica({...conferenciaFisica, dinheiroCaixa: ''}); }} className="text-[10px] font-bold text-red-500 hover:text-red-700 hover:bg-red-50 px-2 py-1 rounded transition-colors flex items-center gap-1">
+                                            <Trash2 size={12}/> Zerar
+                                        </button>
+                                    </div>
 
-    <input type="number" step="0.01" className={`w-full p-3 border-2 rounded-lg text-xl font-bold focus:border-purple-500 outline-none transition-colors ${mostrarCalculadora ? 'bg-purple-100 text-purple-900 border-purple-300' : 'bg-white text-gray-700 border-purple-100'}`} placeholder="0,00" value={conferenciaFisica.dinheiroCaixa} onChange={(e) => setConferenciaFisica({...conferenciaFisica, dinheiroCaixa: e.target.value})} readOnly={mostrarCalculadora} />
-</div>
+                                    <div className="space-y-1.5">
+                                        {[100, 50, 20, 10, 5, 2].map(nota => (
+                                            <div key={nota} className="flex items-center gap-2 text-sm hover:bg-white p-1 rounded transition-colors">
+                                                <span className="w-14 font-bold text-gray-600">R$ {nota}</span>
+                                                <span className="text-gray-300 text-xs text-center w-4">x</span>
+                                                <input type="number" min="0" className="flex-1 p-1 border border-gray-300 rounded text-center font-bold text-gray-800 outline-none focus:ring-1 focus:ring-purple-500 bg-white" placeholder="0" value={contagemNotas[nota]} onChange={(e) => atualizarContagemNotas(nota, e.target.value)} />
+                                                <span className="w-24 text-right font-bold text-purple-700">{BRL((parseInt(contagemNotas[nota]) || 0) * nota)}</span>
+                                            </div>
+                                        ))}
+                                        
+                                        <div className="flex items-center gap-2 text-sm pt-2 border-t border-gray-200 mt-2 p-1">
+                                            <span className="w-14 font-bold text-gray-600">Moedas</span>
+                                            <span className="text-gray-300 text-xs text-center w-4">+</span>
+                                            <input type="number" step="0.01" min="0" className="flex-1 p-1 border border-gray-300 rounded text-center font-bold text-gray-800 outline-none focus:ring-1 focus:ring-purple-500 bg-white" placeholder="0,00" value={contagemNotas.moedas} onChange={(e) => atualizarContagemNotas('moedas', e.target.value)} />
+                                            <span className="w-24 text-right font-bold text-purple-700">{BRL(parseFloat(contagemNotas.moedas) || 0)}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            <input type="number" step="0.01" className={`w-full p-3 border-2 rounded-lg text-xl font-bold focus:border-purple-500 outline-none transition-colors ${mostrarCalculadora ? 'bg-purple-100 text-purple-900 border-purple-300' : 'bg-white text-gray-700 border-purple-100'}`} placeholder="0,00" value={conferenciaFisica.dinheiroCaixa} onChange={(e) => setConferenciaFisica({...conferenciaFisica, dinheiroCaixa: e.target.value})} readOnly={mostrarCalculadora} />
+                        </div>
                        <div className="mb-6 bg-gray-50 p-3 rounded-lg border border-gray-200">
                            <div className="flex justify-between items-center mb-2"><label className="text-xs font-bold text-gray-600 uppercase flex items-center gap-1"><CreditCard size={14}/> Maquinetas</label></div>
                            <div className="space-y-2">
