@@ -125,6 +125,8 @@ export default function App() {
   const [transacoesRH, setTransacoesRH] = useState([]);
   const [saidaViaPix, setSaidaViaPix] = useState(false);
 
+  const [modalAcertoMotoboy, setModalAcertoMotoboy] = useState(null);
+
   // --- ESTADOS DO NOVO PAINEL DE ENTREGAS (MOTOBOYS) ---
   const [entregasPendentes, setEntregasPendentes] = useState([]);
   const [formEntrega, setFormEntrega] = useState({
@@ -1551,21 +1553,20 @@ const realizarLogin = async (perfil) => {
             </div>
           )}
 
-          {/* --- TELA DE ENTREGAS (MOTOBOYS) --- */}
           {activeTab === 'entregas' && (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-fade-in pb-20">
               
               {/* COLUNA ESQUERDA: FORMULÁRIO DE DESPACHO */}
               <div className="lg:col-span-1">
                 <form onSubmit={despacharEntrega} className="bg-white p-5 rounded-xl shadow-sm border-t-4 border-orange-500 sticky top-24">
-                  <h2 className="font-bold text-gray-700 mb-4 flex items-center gap-2 text-sm uppercase tracking-wide">
-                    <Bike size={18} className="text-orange-500"/> Despachar Pedido
+                  <h2 className="font-bold text-gray-700 mb-6 flex items-center gap-2 text-xs uppercase tracking-widest border-b pb-2">
+                    <Bike size={18} className="text-orange-500"/> Passo 1: Despachar
                   </h2>
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-xs font-bold text-gray-600 mb-1">Motoboy</label>
-                      <select value={formEntrega.motoboyId} onChange={(e) => setFormEntrega({...formEntrega, motoboyId: e.target.value})} className="w-full p-2.5 border border-gray-300 rounded bg-gray-50 focus:ring-2 focus:ring-orange-500 outline-none text-sm" required>
-                        <option value="">-- Selecione --</option>
+                      <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Quem vai levar?</label>
+                      <select value={formEntrega.motoboyId} onChange={(e) => setFormEntrega({...formEntrega, motoboyId: e.target.value})} className="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 focus:ring-2 focus:ring-orange-500 outline-none text-sm font-bold" required>
+                        <option value="">-- Selecione o Motoboy --</option>
                         {funcionarios.filter(f => f.equipe === 'Motoboy').map(f => (
                           <option key={f.id} value={f.id}>{f.nome}</option>
                         ))}
@@ -1574,91 +1575,103 @@ const realizarLogin = async (perfil) => {
                     
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="block text-xs font-bold text-gray-600 mb-1">Nº Pedido</label>
-                        <input type="text" className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-orange-500 outline-none font-bold text-center text-gray-700" placeholder="Ex: 15" value={formEntrega.pedidoNumero} onChange={(e) => setFormEntrega({...formEntrega, pedidoNumero: e.target.value})} required/>
+                        <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Nº Pedido</label>
+                        <input type="text" className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none font-bold text-center text-gray-700" placeholder="Ex: 10" value={formEntrega.pedidoNumero} onChange={(e) => setFormEntrega({...formEntrega, pedidoNumero: e.target.value})} required/>
                       </div>
                       <div>
-                        <label className="block text-xs font-bold text-gray-600 mb-1">Valor (R$)</label>
-                        <input type="number" step="0.01" className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-orange-500 outline-none font-bold text-center text-gray-700" placeholder="0,00" value={formEntrega.valorPedido} onChange={(e) => setFormEntrega({...formEntrega, valorPedido: e.target.value})} required/>
+                        <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Valor do Pedido</label>
+                        <input type="number" step="0.01" className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none font-bold text-center text-gray-700" placeholder="0,00" value={formEntrega.valorPedido} onChange={(e) => setFormEntrega({...formEntrega, valorPedido: e.target.value})} required/>
                       </div>
                     </div>
 
                     <div>
-                      <label className="block text-xs font-bold text-gray-600 mb-1">Como vai pagar?</label>
-                      <select value={formEntrega.formaPagamento} onChange={(e) => setFormEntrega({...formEntrega, formaPagamento: e.target.value})} className="w-full p-2.5 border border-gray-300 rounded bg-gray-50 focus:ring-2 focus:ring-orange-500 outline-none text-sm">
-                        <option value="Dinheiro">Dinheiro</option>
-                        <option value="Cartão">Cartão (Maquineta)</option>
-                      </select>
+                      <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Forma de Pagamento na Entrega</label>
+                      <div className="grid grid-cols-2 gap-2">
+                        <button type="button" onClick={() => setFormEntrega({...formEntrega, formaPagamento: 'Dinheiro'})} className={`p-2 rounded-lg border font-bold text-xs transition-all ${formEntrega.formaPagamento === 'Dinheiro' ? 'bg-orange-500 border-orange-600 text-white shadow-md' : 'bg-gray-50 border-gray-200 text-gray-500'}`}>DINHEIRO</button>
+                        <button type="button" onClick={() => setFormEntrega({...formEntrega, formaPagamento: 'Cartão'})} className={`p-2 rounded-lg border font-bold text-xs transition-all ${formEntrega.formaPagamento === 'Cartão' ? 'bg-blue-600 border-blue-700 text-white shadow-md' : 'bg-gray-50 border-gray-200 text-gray-500'}`}>CARTÃO / PIX</button>
+                      </div>
                     </div>
 
-                    {/* MOSTRA O CAMPO DE TROCO SÓ SE FOR DINHEIRO */}
+                    {/* ALERTA DE TROCO */}
                     {formEntrega.formaPagamento === 'Dinheiro' && (
-                      <div className="bg-orange-50 p-3 rounded border border-orange-200 animate-fade-in">
-                        <label className="block text-xs font-bold text-orange-800 mb-1">Levou Troco do Caixa? (R$)</label>
-                        <input type="number" step="0.01" className="w-full p-2 border border-orange-300 rounded focus:ring-2 focus:ring-orange-500 outline-none font-bold text-center text-orange-900 bg-white" placeholder="0,00" value={formEntrega.trocoEnviado} onChange={(e) => setFormEntrega({...formEntrega, trocoEnviado: e.target.value})} />
-                        <p className="text-[9px] text-orange-600 mt-1 mt-1 leading-tight">Deixe em branco se for valor trocado.</p>
+                      <div className="bg-amber-50 p-3 rounded-xl border border-amber-200 animate-fade-in ring-2 ring-amber-100 ring-offset-2">
+                        <label className="block text-[10px] font-black text-amber-800 mb-1 uppercase">💸 Saiu Troco da Gaveta? (R$)</label>
+                        <input type="number" step="0.01" className="w-full p-2 border border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500 outline-none font-black text-center text-amber-900 bg-white text-lg" placeholder="0,00" value={formEntrega.trocoEnviado} onChange={(e) => setFormEntrega({...formEntrega, trocoEnviado: e.target.value})} />
+                        <p className="text-[9px] text-amber-600 mt-2 leading-tight italic">Atenção: Esse valor será somado ao que o motoboy deve te devolver.</p>
                       </div>
                     )}
 
-                    <button type="submit" className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 rounded-lg transition-colors shadow-md">DESPACHAR COM MOTOBOY</button>
+                    <button type="submit" className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 rounded-xl transition-all shadow-lg hover:scale-[1.01] active:scale-95 flex items-center justify-center gap-2">
+                      <Save size={20}/> CONFIRMAR SAÍDA
+                    </button>
                   </div>
                 </form>
               </div>
 
-              {/* COLUNA DIREITA: CARTÕES DOS MOTOBOYS NA RUA */}
+              {/* COLUNA DIREITA: PASSO 2 - ACERTO */}
               <div className="lg:col-span-2">
+                <div className="mb-4 flex items-center justify-between">
+                   <h2 className="font-bold text-gray-700 flex items-center gap-2 text-xs uppercase tracking-widest">
+                    <User size={18} className="text-gray-400"/> Passo 2: Motoboys na Rua
+                  </h2>
+                   <span className="text-[10px] bg-gray-200 px-2 py-1 rounded-full font-bold text-gray-500 uppercase">{Object.keys(entregasAgrupadas).length} Motoboys ativos</span>
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {Object.keys(entregasAgrupadas).length === 0 ? (
-                    <div className="col-span-full bg-white p-10 rounded-xl shadow-sm border border-dashed border-gray-300 text-center text-gray-400">
-                      <Bike size={40} className="mx-auto mb-3 opacity-50"/>
-                      <p>Nenhum motoboy na rua com pedido não pago no momento.</p>
+                    <div className="col-span-full bg-white p-12 rounded-2xl shadow-sm border-2 border-dashed border-gray-200 text-center flex flex-col items-center">
+                      <Bike size={48} className="text-gray-200 mb-4"/>
+                      <p className="text-gray-400 font-bold uppercase text-xs tracking-widest">Aguardando Saídas...</p>
                     </div>
                   ) : (
                     Object.entries(entregasAgrupadas).map(([motoboyId, dados]) => (
-                      <div key={motoboyId} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden relative">
-                        <div className="bg-gray-800 p-3 text-white flex justify-between items-center">
-                          <h3 className="font-bold flex items-center gap-2"><User size={16}/> {dados.nome}</h3>
-                          <span className="bg-orange-500 text-white text-xs font-bold px-2 py-1 rounded-full">{dados.entregas.length} Pedidos</span>
+                      <div key={motoboyId} className="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden flex flex-col">
+                        <div className="bg-gray-800 p-4 text-white flex justify-between items-center">
+                          <h3 className="font-bold flex items-center gap-2 uppercase text-xs"><User size={16} className="text-orange-400"/> {dados.nome}</h3>
+                          <span className="bg-white/10 text-[10px] font-black px-2 py-1 rounded-lg border border-white/20">{dados.entregas.length} PEDIDOS</span>
                         </div>
                         
-                        <div className="p-4 space-y-3">
-                          {/* Lista de Pedidos */}
-                          <div className="space-y-2 max-h-40 overflow-y-auto pr-2">
+                        <div className="p-4 flex-1">
+                          <div className="space-y-2 mb-4">
                             {dados.entregas.map(ent => (
-                              <div key={ent.id} className="text-sm bg-gray-50 border border-gray-100 p-2 rounded flex justify-between items-center">
-                                <div>
-                                  <span className="font-bold text-gray-700">Ped. {ent.pedido_numero}</span>
-                                  <span className="text-[10px] bg-gray-200 px-1 ml-2 rounded text-gray-600">{ent.forma_pagamento}</span>
-                                </div>
+                              <div key={ent.id} className="flex justify-between items-center text-xs p-2 rounded-lg bg-gray-50 border border-gray-100">
+                                <span className="font-bold text-gray-600">Ped. {ent.pedido_numero}</span>
                                 <div className="text-right">
-                                  <span className="font-bold text-gray-800 block">{BRL(ent.valor_pedido)}</span>
-                                  {ent.troco_enviado > 0 && <span className="text-[10px] text-orange-600 font-bold block">Troco: {BRL(ent.troco_enviado)}</span>}
+                                  <span className="font-black text-gray-800">{BRL(ent.valor_pedido)}</span>
+                                  {ent.forma_pagamento === 'Dinheiro' && ent.troco_enviado > 0 && (
+                                    <span className="block text-[9px] text-orange-600 font-bold">Gaveta deu: +{BRL(ent.troco_enviado)}</span>
+                                  )}
                                 </div>
                               </div>
                             ))}
                           </div>
 
-                          {/* Resumo do Acerto */}
-                          <div className="pt-3 border-t border-gray-200 space-y-1">
-                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">O que ele tem que trazer:</p>
+                          {/* RESUMO DO ACERTO VISUAL */}
+                          <div className="bg-slate-900 rounded-xl p-4 text-white space-y-3 shadow-inner">
+                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">O que ele deve te entregar agora:</p>
+                            
                             {dados.totalCartao > 0 && (
-                              <div className="flex justify-between text-sm text-blue-700 font-bold bg-blue-50 p-1.5 rounded">
-                                <span className="flex items-center gap-1"><CreditCard size={14}/> Maquinetas:</span> <span>{BRL(dados.totalCartao)}</span>
+                              <div className="flex justify-between items-center border-b border-white/5 pb-2">
+                                <span className="text-xs flex items-center gap-1 opacity-70"><CreditCard size={14}/> Comprovantes (Maq):</span>
+                                <span className="font-bold text-blue-400">{BRL(dados.totalCartao)}</span>
                               </div>
                             )}
-                            {(dados.totalDinheiro > 0 || dados.totalTroco > 0) && (
-                              <div className="flex justify-between text-sm text-green-800 font-bold bg-green-50 p-2 rounded border border-green-200">
-                                <span className="flex items-center gap-1"><DollarSign size={16}/> Dinheiro Físico:</span> 
-                                <span className="text-lg">{BRL(dados.totalDinheiro + dados.totalTroco)}</span>
-                              </div>
-                            )}
+
+                            <div className="flex justify-between items-center bg-white/5 p-3 rounded-lg border border-white/10">
+                              <span className="text-xs font-bold flex items-center gap-1"><DollarSign size={16} className="text-green-400"/> Dinheiro Físico:</span>
+                              <span className="text-2xl font-black text-green-400">{BRL(dados.totalDinheiro + dados.totalTroco)}</span>
+                            </div>
+                            
+                            <p className="text-[9px] text-center opacity-40 leading-tight">
+                              Cálculo: {BRL(dados.totalDinheiro)} em vendas + {BRL(dados.totalTroco)} de troco inicial
+                            </p>
                           </div>
-                          
+
                           <button 
-                            onClick={() => finalizarAcertoMotoboy(motoboyId, dados.nome, dados.entregas)} 
-                            className="w-full mt-2 bg-gray-800 hover:bg-gray-900 text-white font-bold py-2 rounded transition-colors text-sm"
+                            onClick={() => setModalAcertoMotoboy({ motoboyId, nome: dados.nome, entregas: dados.entregas, totalCartao: dados.totalCartao, totalDinheiro: (dados.totalDinheiro + dados.totalTroco) })} 
+                            className="w-full mt-4 bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 rounded-xl transition-all shadow-md uppercase text-xs tracking-widest"
                           >
-                            FAZER ACERTO FINAL
+                            REALIZAR ACERTO FINAL
                           </button>
                         </div>
                       </div>
@@ -2308,6 +2321,54 @@ const realizarLogin = async (perfil) => {
           </div>
         </div>
       )}
+
+      {/* --- MODAL DE ACERTO DE MOTOBOY (VISUAL) --- */}
+      {modalAcertoMotoboy && (
+        <div className="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-4 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden animate-scale-in border-t-8 border-orange-500">
+            <div className="p-6 text-center">
+              <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center text-orange-600 mx-auto mb-4">
+                <CheckCircle size={32}/>
+              </div>
+              <h3 className="text-xl font-black text-gray-800 uppercase tracking-tight">Conferir {modalAcertoMotoboy.nome}</h3>
+              <p className="text-xs text-gray-500 font-bold mb-6">Confirme os valores recebidos em mãos:</p>
+              
+              <div className="space-y-3 mb-8">
+                <div className="bg-gray-50 p-4 rounded-xl border border-gray-100 flex justify-between items-center">
+                  <span className="text-xs font-bold text-gray-400 uppercase">Dinheiro Físico</span>
+                  <span className="text-xl font-black text-green-600">{BRL(modalAcertoMotoboy.totalDinheiro)}</span>
+                </div>
+
+                {modalAcertoMotoboy.totalCartao > 0 && (
+                  <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 flex justify-between items-center">
+                    <span className="text-xs font-bold text-gray-400 uppercase">Total Cartão</span>
+                    <span className="text-xl font-black text-blue-700">{BRL(modalAcertoMotoboy.totalCartao)}</span>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <button 
+                  onClick={() => {
+                    finalizarAcertoMotoboy(modalAcertoMotoboy.motoboyId, modalAcertoMotoboy.nome, modalAcertoMotoboy.entregas);
+                    setModalAcertoMotoboy(null);
+                  }} 
+                  className="w-full bg-green-600 hover:bg-green-700 text-white font-black py-4 rounded-xl shadow-lg transition-all"
+                >
+                  ESTÁ TUDO CERTO! LANÇAR
+                </button>
+                <button 
+                  onClick={() => setModalAcertoMotoboy(null)} 
+                  className="w-full text-gray-400 font-bold py-2 text-xs uppercase"
+                >
+                  Ainda não recebi
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* --- VISUALIZADOR DE SENHA (BOTÃO FLUTUANTE) --- */}
       {usuarioAtual && usuarioAtual.role === 'gerente' && (
         <div className="fixed bottom-4 right-4 bg-gray-900 text-white p-3 rounded-lg shadow-xl z-50 flex items-center gap-3 border border-gray-700 animate-slide-up print:hidden">
