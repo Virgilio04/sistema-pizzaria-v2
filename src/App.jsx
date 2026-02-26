@@ -273,6 +273,55 @@ export default function App() {
     }
   };
 
+  // Função para despachar um novo pedido com o motoboy
+  const despacharEntrega = async (e) => {
+    e.preventDefault();
+    if (!formEntrega.motoboyId || !formEntrega.pedidoNumero || !formEntrega.valorPedido) {
+      return setModalAviso({ titulo: "Atenção", msg: "Preencha o Motoboy, Nº do Pedido e Valor!", tipo: 'error' });
+    }
+
+    const novaEntrega = {
+      funcionario_id: formEntrega.motoboyId,
+      pedido_numero: formEntrega.pedidoNumero,
+      valor_pedido: parseFloat(formEntrega.valorPedido),
+      forma_pagamento: formEntrega.formaPagamento,
+      troco_enviado: parseFloat(formEntrega.trocoEnviado) || 0,
+      status: 'pendente'
+    };
+
+    const { error } = await supabase.from('entregas_pendentes').insert([novaEntrega]);
+
+    if (error) {
+      console.error(error);
+      setModalAviso({ titulo: "Erro", msg: "Erro ao despachar pedido.", tipo: 'error' });
+    } else {
+      fetchEntregas(); // Atualiza a tela
+      // Limpa só o pedido e valor, mantém o motoboy para facilitar se ele for levar vários
+      setFormEntrega({ ...formEntrega, pedidoNumero: '', valorPedido: '', trocoEnviado: '' }); 
+    }
+  };
+
+  // Agrupa as entregas por motoboy para mostrar nos cartões
+  const entregasAgrupadas = entregasPendentes.reduce((acc, entrega) => {
+    if (!acc[entrega.funcionario_id]) {
+      acc[entrega.funcionario_id] = {
+        nome: entrega.funcionarios?.nome || 'Desconhecido',
+        entregas: [],
+        totalDinheiro: 0,
+        totalCartao: 0,
+        totalTroco: 0
+      };
+    }
+    acc[entrega.funcionario_id].entregas.push(entrega);
+    if (entrega.forma_pagamento === 'Dinheiro') {
+       acc[entrega.funcionario_id].totalDinheiro += Number(entrega.valor_pedido);
+       acc[entrega.funcionario_id].totalTroco += Number(entrega.troco_enviado);
+    } else {
+       acc[entrega.funcionario_id].totalCartao += Number(entrega.valor_pedido);
+    }
+    return acc;
+  }, {});
+
 // --- Helpers ---
   const BRL = (value) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
   const Avatar = ({ nome }) => ( <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm shadow-md">{typeof nome === 'string' ? nome.substring(0, 2).toUpperCase() : 'FX'}</div> );
@@ -1241,6 +1290,122 @@ const realizarLogin = async (perfil) => {
                   </div>
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* --- TELA DE ENTREGAS (MOTOBOYS) --- */}
+          {activeTab === 'entregas' && (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-fade-in pb-20">
+              
+              {/* COLUNA ESQUERDA: FORMULÁRIO DE DESPACHO */}
+              <div className="lg:col-span-1">
+                <form onSubmit={despacharEntrega} className="bg-white p-5 rounded-xl shadow-sm border-t-4 border-orange-500 sticky top-24">
+                  <h2 className="font-bold text-gray-700 mb-4 flex items-center gap-2 text-sm uppercase tracking-wide">
+                    <Bike size={18} className="text-orange-500"/> Despachar Pedido
+                  </h2>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-xs font-bold text-gray-600 mb-1">Motoboy</label>
+                      <select value={formEntrega.motoboyId} onChange={(e) => setFormEntrega({...formEntrega, motoboyId: e.target.value})} className="w-full p-2.5 border border-gray-300 rounded bg-gray-50 focus:ring-2 focus:ring-orange-500 outline-none text-sm" required>
+                        <option value="">-- Selecione --</option>
+                        {funcionarios.filter(f => f.equipe === 'Motoboy').map(f => (
+                          <option key={f.id} value={f.id}>{f.nome}</option>
+                        ))}
+                      </select>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-bold text-gray-600 mb-1">Nº Pedido</label>
+                        <input type="text" className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-orange-500 outline-none font-bold text-center text-gray-700" placeholder="Ex: 15" value={formEntrega.pedidoNumero} onChange={(e) => setFormEntrega({...formEntrega, pedidoNumero: e.target.value})} required/>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-gray-600 mb-1">Valor (R$)</label>
+                        <input type="number" step="0.01" className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-orange-500 outline-none font-bold text-center text-gray-700" placeholder="0,00" value={formEntrega.valorPedido} onChange={(e) => setFormEntrega({...formEntrega, valorPedido: e.target.value})} required/>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-gray-600 mb-1">Como vai pagar?</label>
+                      <select value={formEntrega.formaPagamento} onChange={(e) => setFormEntrega({...formEntrega, formaPagamento: e.target.value})} className="w-full p-2.5 border border-gray-300 rounded bg-gray-50 focus:ring-2 focus:ring-orange-500 outline-none text-sm">
+                        <option value="Dinheiro">Dinheiro</option>
+                        <option value="Cartão">Cartão (Maquineta)</option>
+                      </select>
+                    </div>
+
+                    {/* MOSTRA O CAMPO DE TROCO SÓ SE FOR DINHEIRO */}
+                    {formEntrega.formaPagamento === 'Dinheiro' && (
+                      <div className="bg-orange-50 p-3 rounded border border-orange-200 animate-fade-in">
+                        <label className="block text-xs font-bold text-orange-800 mb-1">Levou Troco do Caixa? (R$)</label>
+                        <input type="number" step="0.01" className="w-full p-2 border border-orange-300 rounded focus:ring-2 focus:ring-orange-500 outline-none font-bold text-center text-orange-900 bg-white" placeholder="0,00" value={formEntrega.trocoEnviado} onChange={(e) => setFormEntrega({...formEntrega, trocoEnviado: e.target.value})} />
+                        <p className="text-[9px] text-orange-600 mt-1 mt-1 leading-tight">Deixe em branco se for valor trocado.</p>
+                      </div>
+                    )}
+
+                    <button type="submit" className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 rounded-lg transition-colors shadow-md">DESPACHAR COM MOTOBOY</button>
+                  </div>
+                </form>
+              </div>
+
+              {/* COLUNA DIREITA: CARTÕES DOS MOTOBOYS NA RUA */}
+              <div className="lg:col-span-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {Object.keys(entregasAgrupadas).length === 0 ? (
+                    <div className="col-span-full bg-white p-10 rounded-xl shadow-sm border border-dashed border-gray-300 text-center text-gray-400">
+                      <Bike size={40} className="mx-auto mb-3 opacity-50"/>
+                      <p>Nenhum motoboy na rua com pedido não pago no momento.</p>
+                    </div>
+                  ) : (
+                    Object.entries(entregasAgrupadas).map(([motoboyId, dados]) => (
+                      <div key={motoboyId} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden relative">
+                        <div className="bg-gray-800 p-3 text-white flex justify-between items-center">
+                          <h3 className="font-bold flex items-center gap-2"><User size={16}/> {dados.nome}</h3>
+                          <span className="bg-orange-500 text-white text-xs font-bold px-2 py-1 rounded-full">{dados.entregas.length} Pedidos</span>
+                        </div>
+                        
+                        <div className="p-4 space-y-3">
+                          {/* Lista de Pedidos */}
+                          <div className="space-y-2 max-h-40 overflow-y-auto pr-2">
+                            {dados.entregas.map(ent => (
+                              <div key={ent.id} className="text-sm bg-gray-50 border border-gray-100 p-2 rounded flex justify-between items-center">
+                                <div>
+                                  <span className="font-bold text-gray-700">Ped. {ent.pedido_numero}</span>
+                                  <span className="text-[10px] bg-gray-200 px-1 ml-2 rounded text-gray-600">{ent.forma_pagamento}</span>
+                                </div>
+                                <div className="text-right">
+                                  <span className="font-bold text-gray-800 block">{BRL(ent.valor_pedido)}</span>
+                                  {ent.troco_enviado > 0 && <span className="text-[10px] text-orange-600 font-bold block">Troco: {BRL(ent.troco_enviado)}</span>}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+
+                          {/* Resumo do Acerto */}
+                          <div className="pt-3 border-t border-gray-200 space-y-1">
+                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">O que ele tem que trazer:</p>
+                            {dados.totalCartao > 0 && (
+                              <div className="flex justify-between text-sm text-blue-700 font-bold bg-blue-50 p-1.5 rounded">
+                                <span className="flex items-center gap-1"><CreditCard size={14}/> Maquinetas:</span> <span>{BRL(dados.totalCartao)}</span>
+                              </div>
+                            )}
+                            {(dados.totalDinheiro > 0 || dados.totalTroco > 0) && (
+                              <div className="flex justify-between text-sm text-green-800 font-bold bg-green-50 p-2 rounded border border-green-200">
+                                <span className="flex items-center gap-1"><DollarSign size={16}/> Dinheiro Físico:</span> 
+                                <span className="text-lg">{BRL(dados.totalDinheiro + dados.totalTroco)}</span>
+                              </div>
+                            )}
+                          </div>
+                          
+                          <button className="w-full mt-2 bg-gray-800 hover:bg-gray-900 text-white font-bold py-2 rounded transition-colors text-sm">
+                            FAZER ACERTO FINAL
+                          </button>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+
             </div>
           )}
 
