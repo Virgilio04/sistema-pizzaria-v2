@@ -1568,7 +1568,6 @@ const realizarLogin = async (perfil) => {
                     <div className="space-y-4 flex-1">
                       {[
                         { label: 'Dinheiro', val: difDinheiro }, 
-                        { label: 'Cartões', val: difCartao }, 
                         ...marcasMaquinetas.map(marca => ({ label: marca, val: diferencasMaquinetas[marca] || 0 })),
                         { label: 'Tuna', val: difTuna }, 
                         { label: 'iFood', val: difIfood }
