@@ -326,15 +326,12 @@ export default function App() {
     }
   };
 
-  // --- FINALIZAR ACERTO (APENAS HISTÓRICO, SEM CAIXA) ---
+  // --- FINALIZAR ACERTO (SEM JANELAS EXTRAS) ---
   const finalizarAcertoMotoboy = async (motoboyId, nomeMotoboy, entregas) => {
-    // Agora o aviso é apenas sobre o histórico
-    if (!confirm(`Confirmar o acerto de ${nomeMotoboy}? As entregas serão movidas para o histórico de hoje.`)) return;
-
-    // 1. Pegamos apenas os IDs para atualizar o status no banco
+    // 1. Pegamos os IDs para atualizar
     const ids = entregas.map(e => e.id);
 
-    // 2. Atualizamos o status para 'concluido' (elas saem da rua, mas ficam no banco)
+    // 2. Atualizamos o status no banco (Sem o 'confirm' de navegador)
     const { error: erroUpdate } = await supabase
       .from('entregas_pendentes')
       .update({ status: 'concluido' })
@@ -344,11 +341,9 @@ export default function App() {
       return setModalAviso({ titulo: "Erro", msg: "Erro ao finalizar acerto.", tipo: 'error' });
     }
 
-    // 3. Sucesso! Limpa a tela e atualiza o histórico
-    setModalAviso({ titulo: "Acerto Concluído!", msg: `O serviço de ${nomeMotoboy} foi arquivado com sucesso.`, tipo: 'success' });
-    
-    fetchEntregas(); // Tira o cartão do motoboy da tela de "na rua"
-    fetchEntregasConcluidas(); // Atualiza a tabelinha de histórico (vamos criar abaixo)
+    // 3. Sucesso! Apenas atualiza a tela sem mostrar outro modal de "OK"
+    fetchEntregas(); 
+    fetchEntregasConcluidas(); 
   };
 
   // --- EXCLUIR UM PEDIDO LANÇADO ERRADO ---
