@@ -129,6 +129,7 @@ export default function App() {
 
   // --- ESTADOS DO NOVO PAINEL DE ENTREGAS (MOTOBOYS) ---
   const [entregasPendentes, setEntregasPendentes] = useState([]);
+  const [entregasConcluidas, setEntregasConcluidas] = useState([]);
   const [formEntrega, setFormEntrega] = useState({
     motoboyId: '',
     pedidoNumero: '',
@@ -198,6 +199,7 @@ export default function App() {
   useEffect(() => {
     fetchFuncionarios();
     fetchEntregas();
+    fetchEntregasConcluidas(); // <--- Esta linha aqui
   }, []);
 
   // 3. Carregar Histórico
@@ -248,6 +250,17 @@ export default function App() {
 
     if (error) console.error('Erro ao buscar entregas:', error);
     else setEntregasPendentes(data || []);
+  };
+
+  const fetchEntregasConcluidas = async () => {
+    const { data, error } = await supabase
+      .from('entregas_pendentes')
+      .select(`*, funcionarios(nome)`)
+      .eq('status', 'concluido')
+      .order('id', { ascending: false })
+      .limit(15); 
+
+    if (!error) setEntregasConcluidas(data || []);
   };
 
   const fetchFuncionarios = async () => {
@@ -308,78 +321,32 @@ export default function App() {
     }
   };
 
-  // Função que finaliza a rota do motoboy e joga o dinheiro no caixa
+  // --- FINALIZAR ACERTO (APENAS HISTÓRICO, SEM CAIXA) ---
   const finalizarAcertoMotoboy = async (motoboyId, nomeMotoboy, entregas) => {
-    if (!confirm(`Confirmar o acerto de ${nomeMotoboy}? Isso vai lançar os valores no Fluxo de Caixa do dia.`)) return;
+    // Agora o aviso é apenas sobre o histórico
+    if (!confirm(`Confirmar o acerto de ${nomeMotoboy}? As entregas serão movidas para o histórico de hoje.`)) return;
 
-    // 1. Separa o que foi Dinheiro e o que foi Cartão
-    let totalDinheiro = 0;
-    let totalCartao = 0;
-    
-    entregas.forEach(ent => {
-      if (ent.forma_pagamento === 'Dinheiro') {
-        totalDinheiro += Number(ent.valor_pedido);
-      } else {
-        totalCartao += Number(ent.valor_pedido);
-      }
-    });
-
-    const novasTransacoes = [];
-    const horaAtual = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-
-    // 2. Prepara o lançamento do Dinheiro
-    if (totalDinheiro > 0) {
-      novasTransacoes.push({
-        hora: horaAtual,
-        descricao: `Moto: ${nomeMotoboy} - Acerto Entregas`,
-        valor: totalDinheiro,
-        categoria: 'venda_dinheiro',
-        tipo: 'entrada',
-        data_movimento: dataMovimento,
-        forma_pagamento: 'dinheiro'
-      });
-    }
-
-    // 3. Prepara o lançamento do Cartão
-    if (totalCartao > 0) {
-      // Pergunta a maquineta rapidinho para não desorganizar o seu fechamento de cartão
-      let maq = prompt(`As vendas no cartão de ${nomeMotoboy} deram R$ ${totalCartao.toFixed(2)}. Qual maquineta ele usou? (Digite: Ton ou Cielo)`);
-      if (!maq) maq = 'Ton'; // Define 'Ton' como padrão se você só der 'OK' ou fechar
-
-      novasTransacoes.push({
-        hora: horaAtual,
-        descricao: `Moto: ${nomeMotoboy} - Acerto Entregas`,
-        valor: totalCartao,
-        categoria: 'venda_cartao',
-        tipo: 'entrada',
-        maquineta: maq,
-        data_movimento: dataMovimento,
-        forma_pagamento: 'dinheiro' 
-      });
-    }
-
-    // 4. Salva tudo no Fluxo de Caixa (Tabela transacoes)
-    if (novasTransacoes.length > 0) {
-      const { error: erroTransacao } = await supabase.from('transacoes').insert(novasTransacoes);
-      if (erroTransacao) return setModalAviso({ titulo: "Erro", msg: "Erro ao lançar no caixa.", tipo: 'error' });
-    }
-
-    // 5. Baixa as entregas (Muda o status para concluído)
+    // 1. Pegamos apenas os IDs para atualizar o status no banco
     const ids = entregas.map(e => e.id);
+
+    // 2. Atualizamos o status para 'concluido' (elas saem da rua, mas ficam no banco)
     const { error: erroUpdate } = await supabase
       .from('entregas_pendentes')
       .update({ status: 'concluido' })
       .in('id', ids);
 
-    if (erroUpdate) return setModalAviso({ titulo: "Erro", msg: "Erro ao limpar entregas do motoboy.", tipo: 'error' });
+    if (erroUpdate) {
+      return setModalAviso({ titulo: "Erro", msg: "Erro ao finalizar acerto.", tipo: 'error' });
+    }
 
-    // 6. Sucesso! Atualiza tudo.
-    setModalAviso({ titulo: "Acerto Concluído!", msg: `O acerto de ${nomeMotoboy} foi lançado no caixa com sucesso.`, tipo: 'success' });
-    fetchEntregas();   // Limpa o cartão do motoboy
-    fetchTransacoes(); // Atualiza a tela de Fluxo de Caixa
+    // 3. Sucesso! Limpa a tela e atualiza o histórico
+    setModalAviso({ titulo: "Acerto Concluído!", msg: `O serviço de ${nomeMotoboy} foi arquivado com sucesso.`, tipo: 'success' });
+    
+    fetchEntregas(); // Tira o cartão do motoboy da tela de "na rua"
+    fetchEntregasConcluidas(); // Atualiza a tabelinha de histórico (vamos criar abaixo)
   };
 
-  // Agrupa as entregas por motoboy para mostrar nos cartões
+  // Mantive o agrupador igual, pois ele serve para montar os cartões de quem está na rua
   const entregasAgrupadas = entregasPendentes.reduce((acc, entrega) => {
     if (!acc[entrega.funcionario_id]) {
       acc[entrega.funcionario_id] = {
@@ -1677,6 +1644,46 @@ const realizarLogin = async (perfil) => {
                       </div>
                     ))
                   )}
+                </div>
+              </div>
+              {/* --- HISTÓRICO DE ENTREGAS FINALIZADAS --- */}
+              <div className="lg:col-span-3 mt-10">
+                <div className="flex items-center gap-2 mb-4 border-b pb-2">
+                  <History size={18} className="text-gray-400"/>
+                  <h2 className="font-bold text-gray-700 text-xs uppercase tracking-widest">Histórico de Entregas (Concluídas)</h2>
+                </div>
+
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                  <table className="w-full text-sm text-left">
+                    <thead className="bg-gray-50 text-[10px] text-gray-500 uppercase font-black">
+                      <tr>
+                        <th className="px-4 py-3">Motoboy</th>
+                        <th className="px-4 py-3 text-center">Pedido</th>
+                        <th className="px-4 py-3">Pagamento</th>
+                        <th className="px-4 py-3 text-right">Valor</th>
+                        <th className="px-4 py-3 text-right">Troco</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-50">
+                      {entregasConcluidas.length === 0 ? (
+                        <tr><td colSpan="5" className="p-8 text-center text-gray-400 italic">Nenhuma entrega finalizada ainda.</td></tr>
+                      ) : (
+                        entregasConcluidas.map(ent => (
+                          <tr key={ent.id} className="hover:bg-gray-50 transition-colors">
+                            <td className="px-4 py-3 font-bold text-gray-700">{ent.funcionarios?.nome}</td>
+                            <td className="px-4 py-3 text-center"><span className="bg-gray-100 px-2 py-0.5 rounded text-[10px] font-bold">#{ent.pedido_numero}</span></td>
+                            <td className="px-4 py-3">
+                              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${ent.forma_pagamento === 'Dinheiro' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>
+                                {ent.forma_pagamento}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 text-right font-black text-gray-800">{BRL(ent.valor_pedido)}</td>
+                            <td className="px-4 py-3 text-right text-orange-600 font-bold">{ent.troco_enviado > 0 ? BRL(ent.troco_enviado) : '-'}</td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
                 </div>
               </div>
 
