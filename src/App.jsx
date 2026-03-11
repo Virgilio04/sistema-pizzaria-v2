@@ -326,12 +326,15 @@ export default function App() {
     }
   };
 
-  // --- FINALIZAR ACERTO (SEM JANELAS EXTRAS) ---
+  // --- FINALIZAR ACERTO (APENAS HISTÓRICO, SEM CAIXA) ---
   const finalizarAcertoMotoboy = async (motoboyId, nomeMotoboy, entregas) => {
-    // 1. Pegamos os IDs para atualizar
+    // Agora o aviso é apenas sobre o histórico
+    if (!confirm(`Confirmar o acerto de ${nomeMotoboy}? As entregas serão movidas para o histórico de hoje.`)) return;
+
+    // 1. Pegamos apenas os IDs para atualizar o status no banco
     const ids = entregas.map(e => e.id);
 
-    // 2. Atualizamos o status no banco (Sem o 'confirm' de navegador)
+    // 2. Atualizamos o status para 'concluido' (elas saem da rua, mas ficam no banco)
     const { error: erroUpdate } = await supabase
       .from('entregas_pendentes')
       .update({ status: 'concluido' })
@@ -341,9 +344,11 @@ export default function App() {
       return setModalAviso({ titulo: "Erro", msg: "Erro ao finalizar acerto.", tipo: 'error' });
     }
 
-    // 3. Sucesso! Apenas atualiza a tela sem mostrar outro modal de "OK"
-    fetchEntregas(); 
-    fetchEntregasConcluidas(); 
+    // 3. Sucesso! Limpa a tela e atualiza o histórico
+    setModalAviso({ titulo: "Acerto Concluído!", msg: `O serviço de ${nomeMotoboy} foi arquivado com sucesso.`, tipo: 'success' });
+    
+    fetchEntregas(); // Tira o cartão do motoboy da tela de "na rua"
+    fetchEntregasConcluidas(); // Atualiza a tabelinha de histórico (vamos criar abaixo)
   };
 
   // --- EXCLUIR UM PEDIDO LANÇADO ERRADO ---
@@ -1668,14 +1673,14 @@ const realizarLogin = async (perfil) => {
                             {dados.entregas.map(ent => (
                               <div key={ent.id} className="flex justify-between items-center text-xs p-2 rounded-lg bg-gray-50 border border-gray-100 group">
                                 <div className="flex items-center gap-2">
-                                  {/* BOTÃO EXCLUIR*/}
+                                  {/* BOTÃO EXCLUIR (Aparece ao passar o mouse ou no toque) */}
                                   <button 
-  onClick={() => excluirEntregaConcluida(ent.id, ent.pedido_numero)}
-  className="text-red-400 hover:text-red-600 transition-all p-1.5 bg-red-50 hover:bg-red-100 rounded-lg"
-  title="Remover do histórico"
->
-  <Trash2 size={16}/>
-</button>
+                                    onClick={() => excluirEntrega(ent.id, ent.pedido_numero)}
+                                    className="text-gray-300 hover:text-red-500 transition-colors"
+                                    title="Excluir lançamento errado"
+                                  >
+                                    <Trash2 size={14}/>
+                                  </button>
                                   <span className="font-bold text-gray-600">Ped. {ent.pedido_numero}</span>
                                 </div>
                                 <div className="text-right">
