@@ -638,7 +638,6 @@ export default function App() {
 💳 Cartão: ${BRL(totalEntradasCartao)}
 ${listaMaquinetasTexto}
 🎫 Tuna: ${BRL(totalEntradasTuna)}
-🎫 Tuna: ${BRL(totalEntradasTuna)}
 🛵 iFood: ${BRL(totalEntradasIfood)}
 
 👇 DETALHAMENTO DE SAÍDAS:
