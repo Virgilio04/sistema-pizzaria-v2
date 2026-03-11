@@ -346,6 +346,22 @@ export default function App() {
     fetchEntregasConcluidas(); // Atualiza a tabelinha de histórico (vamos criar abaixo)
   };
 
+  // --- EXCLUIR UM PEDIDO LANÇADO ERRADO ---
+  const excluirEntrega = async (id, numeroPedido) => {
+    if (!confirm(`Tem certeza que deseja apagar o pedido #${numeroPedido}?`)) return;
+
+    const { error } = await supabase
+      .from('entregas_pendentes')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      setModalAviso({ titulo: "Erro", msg: "Não foi possível excluir a entrega.", tipo: 'error' });
+    } else {
+      fetchEntregas(); // Atualiza a lista na hora
+    }
+  };
+
   // Mantive o agrupador igual, pois ele serve para montar os cartões de quem está na rua
   const entregasAgrupadas = entregasPendentes.reduce((acc, entrega) => {
     if (!acc[entrega.funcionario_id]) {
@@ -1601,8 +1617,18 @@ const realizarLogin = async (perfil) => {
                         <div className="p-4 flex-1">
                           <div className="space-y-2 mb-4">
                             {dados.entregas.map(ent => (
-                              <div key={ent.id} className="flex justify-between items-center text-xs p-2 rounded-lg bg-gray-50 border border-gray-100">
-                                <span className="font-bold text-gray-600">Ped. {ent.pedido_numero}</span>
+                              <div key={ent.id} className="flex justify-between items-center text-xs p-2 rounded-lg bg-gray-50 border border-gray-100 group">
+                                <div className="flex items-center gap-2">
+                                  {/* BOTÃO EXCLUIR (Aparece ao passar o mouse ou no toque) */}
+                                  <button 
+                                    onClick={() => excluirEntrega(ent.id, ent.pedido_numero)}
+                                    className="text-gray-300 hover:text-red-500 transition-colors"
+                                    title="Excluir lançamento errado"
+                                  >
+                                    <Trash2 size={14}/>
+                                  </button>
+                                  <span className="font-bold text-gray-600">Ped. {ent.pedido_numero}</span>
+                                </div>
                                 <div className="text-right">
                                   <span className="font-black text-gray-800">{BRL(ent.valor_pedido)}</span>
                                   {ent.forma_pagamento === 'Dinheiro' && ent.troco_enviado > 0 && (
