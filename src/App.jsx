@@ -362,6 +362,22 @@ export default function App() {
     }
   };
 
+  // --- EXCLUIR ENTREGA QUE JÁ FOI CONCLUÍDA ---
+  const excluirEntregaConcluida = async (id, numeroPedido) => {
+    if (!confirm(`Deseja apagar permanentemente o pedido #${numeroPedido} do histórico?`)) return;
+
+    const { error } = await supabase
+      .from('entregas_pendentes')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      setModalAviso({ titulo: "Erro", msg: "Não foi possível remover do histórico.", tipo: 'error' });
+    } else {
+      fetchEntregasConcluidas(); // Atualiza apenas a lista de baixo
+    }
+  };
+
   // Mantive o agrupador igual, pois ele serve para montar os cartões de quem está na rua
   const entregasAgrupadas = entregasPendentes.reduce((acc, entrega) => {
     if (!acc[entrega.funcionario_id]) {
@@ -1688,14 +1704,15 @@ const realizarLogin = async (perfil) => {
                         <th className="px-4 py-3">Pagamento</th>
                         <th className="px-4 py-3 text-right">Valor</th>
                         <th className="px-4 py-3 text-right">Troco</th>
+                        <th className="px-4 py-3 text-center w-10"></th> {/* Coluna da lixeira */}
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-50">
                       {entregasConcluidas.length === 0 ? (
-                        <tr><td colSpan="5" className="p-8 text-center text-gray-400 italic">Nenhuma entrega finalizada ainda.</td></tr>
+                        <tr><td colSpan="6" className="p-8 text-center text-gray-400 italic">Nenhuma entrega finalizada ainda.</td></tr>
                       ) : (
                         entregasConcluidas.map(ent => (
-                          <tr key={ent.id} className="hover:bg-gray-50 transition-colors">
+                          <tr key={ent.id} className="hover:bg-gray-50 transition-colors group">
                             <td className="px-4 py-3 font-bold text-gray-700">{ent.funcionarios?.nome}</td>
                             <td className="px-4 py-3 text-center"><span className="bg-gray-100 px-2 py-0.5 rounded text-[10px] font-bold">#{ent.pedido_numero}</span></td>
                             <td className="px-4 py-3">
@@ -1705,6 +1722,16 @@ const realizarLogin = async (perfil) => {
                             </td>
                             <td className="px-4 py-3 text-right font-black text-gray-800">{BRL(ent.valor_pedido)}</td>
                             <td className="px-4 py-3 text-right text-orange-600 font-bold">{ent.troco_enviado > 0 ? BRL(ent.troco_enviado) : '-'}</td>
+                            <td className="px-4 py-3 text-center">
+                              {/* BOTÃO EXCLUIR NO HISTÓRICO */}
+                              <button 
+                                onClick={() => excluirEntregaConcluida(ent.id, ent.pedido_numero)}
+                                className="text-gray-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+                                title="Remover do histórico"
+                              >
+                                <Trash2 size={14}/>
+                              </button>
+                            </td>
                           </tr>
                         ))
                       )}
