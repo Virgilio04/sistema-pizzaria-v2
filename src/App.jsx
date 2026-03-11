@@ -1668,14 +1668,14 @@ const realizarLogin = async (perfil) => {
                             {dados.entregas.map(ent => (
                               <div key={ent.id} className="flex justify-between items-center text-xs p-2 rounded-lg bg-gray-50 border border-gray-100 group">
                                 <div className="flex items-center gap-2">
-                                  {/* BOTÃO EXCLUIR (Aparece ao passar o mouse ou no toque) */}
+                                  {/* BOTÃO EXCLUIR*/}
                                   <button 
-                                    onClick={() => excluirEntrega(ent.id, ent.pedido_numero)}
-                                    className="text-gray-300 hover:text-red-500 transition-colors"
-                                    title="Excluir lançamento errado"
-                                  >
-                                    <Trash2 size={14}/>
-                                  </button>
+  onClick={() => excluirEntregaConcluida(ent.id, ent.pedido_numero)}
+  className="text-red-400 hover:text-red-600 transition-all p-1.5 bg-red-50 hover:bg-red-100 rounded-lg"
+  title="Remover do histórico"
+>
+  <Trash2 size={16}/>
+</button>
                                   <span className="font-bold text-gray-600">Ped. {ent.pedido_numero}</span>
                                 </div>
                                 <div className="text-right">
