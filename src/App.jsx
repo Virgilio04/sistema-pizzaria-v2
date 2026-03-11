@@ -183,9 +183,12 @@ export default function App() {
   }, [categoria, motoQtd, motoValorEntregas, motoMeta, motoValorAjuda]);
   
   // --- EFEITOS SUPABASE (Carregamento Real) ---
-  // 1. Carregar Transações do Dia
+  // 1. Carregar Transações e Entregas do Dia Selecionado
   useEffect(() => {
     fetchTransacoes();
+    fetchEntregas();           // Busca quem está na rua nesse dia
+    fetchEntregasConcluidas(); // Busca o histórico desse dia
+    
     const channel = supabase
       .channel('realtime_transacoes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'transacoes' }, () => {
@@ -258,8 +261,8 @@ export default function App() {
       .from('entregas_pendentes')
       .select(`*, funcionarios(nome)`)
       .eq('status', 'concluido')
-      .order('id', { ascending: false })
-      .limit(15); 
+      .eq('data_movimento', dataMovimento) // <--- FILTRO POR DATA ADICIONADO
+      .order('id', { ascending: false });
 
     if (!error) setEntregasConcluidas(data || []);
   };
@@ -307,7 +310,8 @@ export default function App() {
       valor_pedido: parseFloat(formEntrega.valorPedido),
       forma_pagamento: formEntrega.formaPagamento,
       troco_enviado: parseFloat(formEntrega.trocoEnviado) || 0,
-      status: 'pendente'
+      status: 'pendente',
+      data_movimento: dataMovimento // <--- ADICIONE ESTA LINHA
     };
 
     const { error } = await supabase.from('entregas_pendentes').insert([novaEntrega]);
