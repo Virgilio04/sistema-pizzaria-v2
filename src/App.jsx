@@ -2351,32 +2351,57 @@ const realizarLogin = async (perfil) => {
         </table>
       </div>
 
-      {/* Rodapé com Total e Botão Copiar */}
-      <div className="p-4 bg-gray-50 border-t border-gray-200 flex justify-between items-center gap-4">
+      {/* Rodapé com Limite de 30% e Total */}
+      <div className="p-5 bg-gray-50 border-t border-gray-200">
         
-        {/* Esquerda: Período */}
-        <div className="text-xs text-gray-500 hidden md:block">
-           Período: <strong>{getPeriodoAtual(dataMovimento).inicio}</strong> até <strong>{getPeriodoAtual(dataMovimento).fim}</strong>
+        {/* --- NOVO: BARRA DE LIMITE DE 30% --- */}
+        <div className="mb-6 bg-white p-3 rounded-xl border border-gray-200 shadow-sm">
+          <div className="flex justify-between items-end mb-2">
+            <div>
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Limite por Quinzena (30%)</p>
+              <p className="text-sm font-bold text-blue-600">Máximo: {BRL(modalExtrato.salario * 0.30)}</p>
+            </div>
+            <div className="text-right">
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Disponível</p>
+              <p className={`text-sm font-bold ${ (modalExtrato.salario * 0.30) - transacoesRH.filter(t => t.info_desconto?.funcionarioId === modalExtrato.id && calcularDataDesconto(t.data_movimento) === calcularDataDesconto(dataMovimento)).reduce((acc, t) => acc + t.valor, 0) < 0 ? 'text-red-600' : 'text-green-600' }`}>
+                {BRL((modalExtrato.salario * 0.30) - transacoesRH.filter(t => t.info_desconto?.funcionarioId === modalExtrato.id && calcularDataDesconto(t.data_movimento) === calcularDataDesconto(dataMovimento)).reduce((acc, t) => acc + t.valor, 0))}
+              </p>
+            </div>
+          </div>
+          
+          {/* Barra de Progresso */}
+          <div className="w-full bg-gray-200 h-3 rounded-full overflow-hidden flex">
+            <div 
+              className={`h-full transition-all duration-500 ${
+                (transacoesRH.filter(t => t.info_desconto?.funcionarioId === modalExtrato.id && calcularDataDesconto(t.data_movimento) === calcularDataDesconto(dataMovimento)).reduce((acc, t) => acc + t.valor, 0) / (modalExtrato.salario * 0.30)) > 1 ? 'bg-red-500' : 'bg-blue-500'
+              }`}
+              style={{ width: `${Math.min((transacoesRH.filter(t => t.info_desconto?.funcionarioId === modalExtrato.id && calcularDataDesconto(t.data_movimento) === calcularDataDesconto(dataMovimento)).reduce((acc, t) => acc + t.valor, 0) / (modalExtrato.salario * 0.30)) * 100, 100)}%` }}
+            ></div>
+          </div>
+          <p className="text-[9px] text-gray-400 mt-2 italic text-center">
+            O limite é calculado sobre o salário base de {BRL(modalExtrato.salario)}
+          </p>
         </div>
 
-        {/* --- NOVO BOTÃO AQUI --- */}
-        <button 
-          onClick={copiarExtratoIndividual}
-          className="flex-1 md:flex-none bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition-colors"
-        >
-          <Copy size={14}/> Copiar p/ WhatsApp
-        </button>
-        {/* ----------------------- */}
+        <div className="flex justify-between items-center gap-4">
+          <button 
+            onClick={copiarExtratoIndividual}
+            className="flex-1 md:flex-none bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded-lg font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition-colors"
+          >
+            <Copy size={14}/> Copiar p/ WhatsApp
+          </button>
 
-        {/* Direita: Valor Total */}
-        <div className="text-right">
-           <span className="block text-xs font-bold text-gray-500 uppercase">Total Descontado</span>
-           <span className="text-xl font-bold text-red-600">
-             {BRL(transacoesRH.filter(t => {
-                if (!t.info_desconto || t.info_desconto.funcionarioId !== modalExtrato.id) return false;
-                return calcularDataDesconto(t.data_movimento) === calcularDataDesconto(dataMovimento);
-             }).reduce((acc, t) => acc + t.valor, 0))}
-           </span>
+          <div className="text-right">
+            <span className="block text-xs font-bold text-gray-500 uppercase">Total já pego</span>
+            <span className="text-2xl font-black text-red-600">
+              {BRL(transacoesRH.filter(t => {
+                if (!t.info_desconto || t.info_desconto.funcionarioId === modalExtrato.id) {
+                   return calcularDataDesconto(t.data_movimento) === calcularDataDesconto(dataMovimento);
+                }
+                return false;
+              }).reduce((acc, t) => acc + t.valor, 0))}
+            </span>
+          </div>
         </div>
       </div>
     </div>
