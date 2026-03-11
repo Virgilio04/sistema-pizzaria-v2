@@ -130,6 +130,7 @@ export default function App() {
   // --- ESTADOS DO NOVO PAINEL DE ENTREGAS (MOTOBOYS) ---
   const [entregasPendentes, setEntregasPendentes] = useState([]);
   const [entregasConcluidas, setEntregasConcluidas] = useState([]);
+  const [idsSelecionadosEntregas, setIdsSelecionadosEntregas] = useState([]);
   const [formEntrega, setFormEntrega] = useState({
     motoboyId: '',
     pedidoNumero: '',
@@ -375,6 +376,39 @@ export default function App() {
       setModalAviso({ titulo: "Erro", msg: "Não foi possível remover do histórico.", tipo: 'error' });
     } else {
       fetchEntregasConcluidas(); // Atualiza apenas a lista de baixo
+    }
+  };
+
+  // Alternar a seleção de um único pedido no histórico
+  const toggleSelecaoEntrega = (id) => {
+    setIdsSelecionadosEntregas(prev =>
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  };
+
+  // Selecionar todos os itens que estão aparecendo na tabela de histórico
+  const selecionarTodasEntregas = () => {
+    if (idsSelecionadosEntregas.length === entregasConcluidas.length) {
+      setIdsSelecionadosEntregas([]);
+    } else {
+      setIdsSelecionadosEntregas(entregasConcluidas.map(e => e.id));
+    }
+  };
+
+  // Excluir todos os pedidos selecionados de uma vez
+  const excluirEntregasEmMassa = async () => {
+    if (!confirm(`Deseja apagar permanentemente as ${idsSelecionadosEntregas.length} entregas selecionadas?`)) return;
+
+    const { error } = await supabase
+      .from('entregas_pendentes')
+      .delete()
+      .in('id', idsSelecionadosEntregas);
+
+    if (error) {
+      setModalAviso({ titulo: "Erro", msg: "Erro ao excluir entregas selecionadas.", tipo: 'error' });
+    } else {
+      setIdsSelecionadosEntregas([]); // Limpa a seleção após excluir
+      fetchEntregasConcluidas(); // Atualiza a tabela
     }
   };
 
@@ -1697,22 +1731,38 @@ const realizarLogin = async (perfil) => {
 
                 <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                   <table className="w-full text-sm text-left">
-                    <thead className="bg-gray-50 text-[10px] text-gray-500 uppercase font-black">
+                    <thead className="bg-gray-50 text-[10px] text-gray-500 uppercase font-black border-b">
                       <tr>
+                        <th className="px-4 py-3 w-10">
+                          <input 
+                            type="checkbox" 
+                            className="w-4 h-4 rounded border-gray-300 text-orange-500 focus:ring-orange-500 cursor-pointer"
+                            checked={entregasConcluidas.length > 0 && idsSelecionadosEntregas.length === entregasConcluidas.length}
+                            onChange={selecionarTodasEntregas}
+                          />
+                        </th>
                         <th className="px-4 py-3">Motoboy</th>
                         <th className="px-4 py-3 text-center">Pedido</th>
                         <th className="px-4 py-3">Pagamento</th>
                         <th className="px-4 py-3 text-right">Valor</th>
                         <th className="px-4 py-3 text-right">Troco</th>
-                        <th className="px-4 py-3 text-center w-10"></th> {/* Coluna da lixeira */}
+                        <th className="px-4 py-3 text-center w-10"></th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-50">
                       {entregasConcluidas.length === 0 ? (
-                        <tr><td colSpan="6" className="p-8 text-center text-gray-400 italic">Nenhuma entrega finalizada ainda.</td></tr>
+                        <tr><td colSpan="7" className="p-8 text-center text-gray-400 italic">Nenhuma entrega finalizada ainda.</td></tr>
                       ) : (
                         entregasConcluidas.map(ent => (
-                          <tr key={ent.id} className="hover:bg-gray-50 transition-colors group">
+                          <tr key={ent.id} className={`hover:bg-gray-50 transition-colors group ${idsSelecionadosEntregas.includes(ent.id) ? 'bg-orange-50' : ''}`}>
+                            <td className="px-4 py-3">
+                              <input 
+                                type="checkbox" 
+                                className="w-4 h-4 rounded border-gray-300 text-orange-500 focus:ring-orange-500 cursor-pointer"
+                                checked={idsSelecionadosEntregas.includes(ent.id)}
+                                onChange={() => toggleSelecaoEntrega(ent.id)}
+                              />
+                            </td>
                             <td className="px-4 py-3 font-bold text-gray-700">{ent.funcionarios?.nome}</td>
                             <td className="px-4 py-3 text-center"><span className="bg-gray-100 px-2 py-0.5 rounded text-[10px] font-bold">#{ent.pedido_numero}</span></td>
                             <td className="px-4 py-3">
@@ -1723,11 +1773,9 @@ const realizarLogin = async (perfil) => {
                             <td className="px-4 py-3 text-right font-black text-gray-800">{BRL(ent.valor_pedido)}</td>
                             <td className="px-4 py-3 text-right text-orange-600 font-bold">{ent.troco_enviado > 0 ? BRL(ent.troco_enviado) : '-'}</td>
                             <td className="px-4 py-3 text-center">
-                              {/* BOTÃO EXCLUIR NO HISTÓRICO */}
                               <button 
                                 onClick={() => excluirEntregaConcluida(ent.id, ent.pedido_numero)}
                                 className="text-gray-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
-                                title="Remover do histórico"
                               >
                                 <Trash2 size={14}/>
                               </button>
@@ -2447,6 +2495,20 @@ const realizarLogin = async (perfil) => {
       )}
     </div>
   );
+
+  {/* --- BARRA DE AÇÃO EM MASSA PARA ENTREGAS --- */}
+      {idsSelecionadosEntregas.length > 0 && activeTab === 'entregas' && (
+        <div className="fixed bottom-20 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white px-6 py-3 rounded-full shadow-2xl z-50 flex items-center gap-4 animate-slide-up border border-gray-700">
+           <span className="font-bold text-sm text-orange-400">{idsSelecionadosEntregas.length} pedidos selecionados</span>
+           <div className="h-4 w-px bg-gray-600"></div>
+           <button onClick={excluirEntregasEmMassa} className="flex items-center gap-2 text-red-400 hover:text-red-300 font-bold text-sm transition-colors">
+              <Trash2 size={16}/> Excluir Selecionados
+           </button>
+           <button onClick={() => setIdsSelecionadosEntregas([])} className="ml-4 bg-gray-700 hover:bg-gray-600 rounded-full p-1 transition-colors">
+              <X size={14}/>
+           </button>
+        </div>
+      )}
 }
 
 // testando 
