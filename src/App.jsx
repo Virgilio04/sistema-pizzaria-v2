@@ -2476,6 +2476,20 @@ const realizarLogin = async (perfil) => {
           </div>
         </div>
       )}
+      
+      {/* --- BARRA DE AÇÃO EM MASSA PARA ENTREGAS --- */}
+      {idsSelecionadosEntregas.length > 0 && activeTab === 'entregas' && (
+        <div className="fixed bottom-24 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white px-6 py-3 rounded-full shadow-2xl z-[100] flex items-center gap-4 animate-slide-up border border-gray-700">
+           <span className="font-bold text-sm text-orange-400">{idsSelecionadosEntregas.length} pedidos selecionados</span>
+           <div className="h-4 w-px bg-gray-600"></div>
+           <button onClick={excluirEntregasEmMassa} className="flex items-center gap-2 text-red-400 hover:text-red-300 font-bold text-sm transition-colors uppercase">
+              <Trash2 size={16}/> Excluir Selecionados
+           </button>
+           <button onClick={() => setIdsSelecionadosEntregas([])} className="ml-4 bg-gray-700 hover:bg-gray-600 rounded-full p-1 transition-colors">
+              <X size={14}/>
+           </button>
+        </div>
+      )}
 
       {/* --- VISUALIZADOR DE SENHA (BOTÃO FLUTUANTE) --- */}
       {usuarioAtual && usuarioAtual.role === 'gerente' && (
@@ -2495,20 +2509,5 @@ const realizarLogin = async (perfil) => {
       )}
     </div>
   );
-
-  {/* --- BARRA DE AÇÃO EM MASSA PARA ENTREGAS --- */}
-      {idsSelecionadosEntregas.length > 0 && activeTab === 'entregas' && (
-        <div className="fixed bottom-20 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white px-6 py-3 rounded-full shadow-2xl z-50 flex items-center gap-4 animate-slide-up border border-gray-700">
-           <span className="font-bold text-sm text-orange-400">{idsSelecionadosEntregas.length} pedidos selecionados</span>
-           <div className="h-4 w-px bg-gray-600"></div>
-           <button onClick={excluirEntregasEmMassa} className="flex items-center gap-2 text-red-400 hover:text-red-300 font-bold text-sm transition-colors">
-              <Trash2 size={16}/> Excluir Selecionados
-           </button>
-           <button onClick={() => setIdsSelecionadosEntregas([])} className="ml-4 bg-gray-700 hover:bg-gray-600 rounded-full p-1 transition-colors">
-              <X size={14}/>
-           </button>
-        </div>
-      )}
 }
 
-// testando 
