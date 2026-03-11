@@ -1773,11 +1773,12 @@ const realizarLogin = async (perfil) => {
                             <td className="px-4 py-3 text-right text-orange-600 font-bold">{ent.troco_enviado > 0 ? BRL(ent.troco_enviado) : '-'}</td>
                             <td className="px-4 py-3 text-center">
                               <button 
-                                onClick={() => excluirEntregaConcluida(ent.id, ent.pedido_numero)}
-                                className="text-gray-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
-                              >
-                                <Trash2 size={14}/>
-                              </button>
+  onClick={() => excluirEntregaConcluida(ent.id, ent.pedido_numero)}
+  className="text-red-400 hover:text-red-600 transition-all p-1.5 bg-red-50 hover:bg-red-100 rounded-lg"
+  title="Remover do histórico"
+>
+  <Trash2 size={16}/>
+</button>
                             </td>
                           </tr>
                         ))
