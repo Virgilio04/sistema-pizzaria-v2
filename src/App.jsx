@@ -1330,93 +1330,139 @@ const realizarLogin = async (perfil) => {
         </div>
       )}
 
-      {/* --- MODAL DE DETALHES DO HISTÓRICO --- */}
-      {modalDetalhes && modalDetalhes.tipo === 'historico' && (
-        <div className="fixed inset-0 bg-black/50 z-[70] flex items-center justify-center p-4">
-            <div className="bg-white rounded-xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto animate-scale-in">
-            <div className="p-6">
-                <div className="flex justify-between items-start mb-6 border-b pb-4">Data: {modalDetalhes.dados.dataBanco.split('-').reverse().join('/')}
-                <div><h2 className="text-xl font-bold text-gray-800 flex items-center gap-2"><FileSpreadsheet size={24} className="text-blue-600"/> Detalhes do Fechamento</h2><p className="text-sm text-gray-500"> | Resp: {modalDetalhes.dados.responsavelFechamento}</p></div>
-                <button onClick={() => setModalDetalhes(null)} className="text-gray-400 hover:text-red-500 transition-colors"><X size={24}/></button>
-                </div>
-                <div className="space-y-6">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="bg-green-50 p-3 rounded-lg border border-green-100"><p className="text-[10px] text-green-800 font-bold uppercase">Faturamento Total</p><p className="text-lg font-bold text-green-700">{BRL(modalDetalhes.dados.resumoFinanceiro?.faturamentoTotal)}</p></div>
-                    <div className="bg-gray-50 p-3 rounded-lg border border-gray-200"><p className="text-[10px] text-gray-600 font-bold uppercase">Dinheiro (Gaveta)</p><p className="text-lg font-bold text-gray-800">{BRL(modalDetalhes.dados.auditoria?.sistema?.dinheiro)}</p></div>
-                    <div className="bg-blue-50 p-3 rounded-lg border border-blue-100"><p className="text-[10px] text-blue-800 font-bold uppercase">Cartão</p><p className="text-lg font-bold text-blue-700">{BRL(modalDetalhes.dados.auditoria?.sistema?.cartao)}</p></div>
-                    <div className="bg-red-50 p-3 rounded-lg border border-red-100"><p className="text-[10px] text-red-800 font-bold uppercase">Saídas</p><p className="text-lg font-bold text-red-700">{BRL(modalDetalhes.dados.resumoFinanceiro?.totalSaidas)}</p></div>
-                </div>
-                {/* SEÇÃO DETALHADA DE RECEBIMENTOS */}
-<div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm mb-4">
-  <h3 className="font-bold text-gray-700 mb-3 flex items-center gap-2 text-sm uppercase border-b pb-2">
-    <CreditCard size={16} className="text-blue-600"/> Detalhamento de Recebidos
-  </h3>
-  
-  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-    {/* Coluna das Maquinetas */}
-    <div className="space-y-2">
-      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Maquinetas Físicas</p>
+      {/* --- MODAL DE DETALHES DO HISTÓRICO (VERSÃO DIDÁTICA) --- */}
+{modalDetalhes && modalDetalhes.tipo === 'historico' && (
+  <div className="fixed inset-0 bg-black/50 z-[70] flex items-center justify-center p-4 backdrop-blur-sm">
+    <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[95vh] overflow-hidden flex flex-col animate-scale-in">
       
-      {modalDetalhes.dados.auditoria?.sistema?.maquinetasDetalhadas ? (
-        Object.entries(modalDetalhes.dados.auditoria.sistema.maquinetasDetalhadas).map(([marca, valor]) => (
-          <div key={marca} className="flex justify-between items-center py-1 border-b border-gray-50">
-            <span className="text-sm text-gray-600">{marca}:</span>
-            <span className="text-sm font-bold text-gray-800">{BRL(valor || 0)}</span>
+      {/* CABEÇALHO REESTRUTURADO */}
+      <div className="p-6 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
+        <div className="flex items-center gap-4">
+          <div className="bg-blue-600 p-3 rounded-xl text-white shadow-lg shadow-blue-200">
+            <FileSpreadsheet size={28} />
           </div>
-        ))
-      ) : (
-        <>
-          <div className="flex justify-between items-center py-1 border-b border-gray-50">
-            <span className="text-sm text-gray-600">Ton:</span>
-            <span className="text-sm font-bold text-gray-800">{BRL(modalDetalhes.dados.auditoria?.sistema?.ton || 0)}</span>
+          <div>
+            <h2 className="text-xl font-black text-gray-800 tracking-tight uppercase">Resumo da Noite</h2>
+            <div className="flex items-center gap-3 mt-1">
+              <span className="flex items-center gap-1 text-xs font-bold text-gray-500 bg-white px-2 py-1 rounded border border-gray-200">
+                <Calendar size={12} className="text-blue-500"/> {modalDetalhes.dados.dataBanco.split('-').reverse().join('/')}
+              </span>
+              <span className="flex items-center gap-1 text-xs font-bold text-gray-500 bg-white px-2 py-1 rounded border border-gray-200">
+                <User size={12} className="text-blue-500"/> Operador: {modalDetalhes.dados.responsavelFechamento}
+              </span>
+            </div>
           </div>
-          <div className="flex justify-between items-center py-1 border-b border-gray-50">
-            <span className="text-sm text-gray-600">Cielo:</span>
-            <span className="text-sm font-bold text-gray-800">{BRL(modalDetalhes.dados.auditoria?.sistema?.cielo || 0)}</span>
-          </div>
-        </>
-      )}
+        </div>
+        <button onClick={() => setModalDetalhes(null)} className="p-2 hover:bg-red-50 text-gray-400 hover:text-red-500 rounded-full transition-all">
+          <X size={24}/>
+        </button>
+      </div>
 
-      <div className="flex justify-between items-center py-2 bg-blue-50 px-2 rounded mt-1">
-        <span className="text-xs font-bold text-blue-800 uppercase">Total Cartão:</span>
-        <span className="text-sm font-black text-blue-900">{BRL(modalDetalhes.dados.auditoria?.sistema?.cartao || 0)}</span>
-      </div>
-    </div>
+      <div className="p-6 overflow-y-auto space-y-8">
+        
+        {/* SEÇÃO 1: CARDS DE PERFORMANCE (O QUE ACONTECEU) */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="p-4 bg-gradient-to-br from-green-50 to-white rounded-2xl border border-green-100">
+            <p className="text-[10px] font-black text-green-800 uppercase tracking-widest mb-1">Vendas Totais</p>
+            <p className="text-xl font-black text-green-700">{BRL(modalDetalhes.dados.resumoFinanceiro?.faturamentoTotal)}</p>
+            <p className="text-[9px] text-green-600/70 font-bold mt-1">Tudo que entrou hoje</p>
+          </div>
+          <div className="p-4 bg-gradient-to-br from-blue-50 to-white rounded-2xl border border-blue-100">
+            <p className="text-[10px] font-black text-blue-800 uppercase tracking-widest mb-1">Total Cartão</p>
+            <p className="text-xl font-black text-blue-700">{BRL(modalDetalhes.dados.auditoria?.sistema?.cartao)}</p>
+            <p className="text-[9px] text-blue-600/70 font-bold mt-1">Crédito, Débito e PIX</p>
+          </div>
+          <div className="p-4 bg-gradient-to-br from-gray-50 to-white rounded-2xl border border-gray-200">
+            <p className="text-[10px] font-black text-gray-800 uppercase tracking-widest mb-1">Esperado em Espécie</p>
+            <p className="text-xl font-black text-gray-800">{BRL(modalDetalhes.dados.auditoria?.sistema?.dinheiro)}</p>
+            <p className="text-[9px] text-gray-500 font-bold mt-1">Valor alvo na gaveta</p>
+          </div>
+          <div className="p-4 bg-gradient-to-br from-red-50 to-white rounded-2xl border border-red-100">
+            <p className="text-[10px] font-black text-red-800 uppercase tracking-widest mb-1">Saídas / Despesas</p>
+            <p className="text-xl font-black text-red-700">{BRL(modalDetalhes.dados.resumoFinanceiro?.totalSaidas)}</p>
+            <p className="text-[9px] text-red-600/70 font-bold mt-1">Pagamentos realizados</p>
+          </div>
+        </div>
 
-    {/* Coluna dos Aplicativos */}
-    <div className="space-y-2">
-      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Vendas Online / Apps</p>
-      <div className="flex justify-between items-center py-1 border-b border-gray-50">
-        <span className="text-sm text-gray-600">Tuna / App:</span>
-        <span className="text-sm font-bold text-gray-800">{BRL(modalDetalhes.dados.auditoria?.sistema?.tuna || 0)}</span>
-      </div>
-      <div className="flex justify-between items-center py-1 border-b border-gray-50">
-        <span className="text-sm text-gray-600">iFood:</span>
-        <span className="text-sm font-bold text-gray-800">{BRL(modalDetalhes.dados.auditoria?.sistema?.ifood || 0)}</span>
-      </div>
-      <div className="flex justify-between items-center py-2 bg-orange-50 px-2 rounded mt-1">
-        <span className="text-xs font-bold text-orange-800 uppercase">Total Apps:</span>
-        <span className="text-sm font-black text-orange-900">
-          {BRL((modalDetalhes.dados.auditoria?.sistema?.tuna || 0) + (modalDetalhes.dados.auditoria?.sistema?.ifood || 0))}
-        </span>
+        {/* SEÇÃO 2: AUDITORIA (BATEU OU NÃO?) */}
+        <div className={`p-5 rounded-2xl border-2 flex flex-col md:flex-row items-center justify-between gap-6 ${Math.abs(modalDetalhes.dados.auditoria?.diferencas?.total || 0) < 1 ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
+          <div className="flex items-center gap-4">
+            <div className={`p-4 rounded-full ${Math.abs(modalDetalhes.dados.auditoria?.diferencas?.total || 0) < 1 ? 'bg-green-600' : 'bg-red-600'} text-white shadow-lg`}>
+              {Math.abs(modalDetalhes.dados.auditoria?.diferencas?.total || 0) < 1 ? <CheckCircle size={32}/> : <AlertTriangle size={32}/>}
+            </div>
+            <div>
+              <h3 className={`text-lg font-black uppercase tracking-tight ${Math.abs(modalDetalhes.dados.auditoria?.diferencas?.total || 0) < 1 ? 'text-green-800' : 'text-red-800'}`}>
+                {Math.abs(modalDetalhes.dados.auditoria?.diferencas?.total || 0) < 1 ? 'Caixa Conferido!' : 'Diferença Detectada'}
+              </h3>
+              <p className="text-sm font-medium opacity-70">Comparação entre o Sistema e a Contagem Física</p>
+            </div>
+          </div>
+          <div className="text-center md:text-right bg-white/50 px-6 py-3 rounded-xl border border-black/5">
+             <p className="text-[10px] font-black text-gray-500 uppercase">Diferença Final</p>
+             <p className={`text-2xl font-black ${modalDetalhes.dados.auditoria?.diferencas?.total < 0 ? 'text-red-600' : modalDetalhes.dados.auditoria?.diferencas?.total > 0 ? 'text-blue-600' : 'text-green-600'}`}>
+               {BRL(modalDetalhes.dados.auditoria?.diferencas?.total || 0)}
+             </p>
+          </div>
+        </div>
+
+        {/* DETALHAMENTO DE RECEBIDOS E CONFERÊNCIA */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          
+          {/* LADO A: O QUE ENTROU PELAS MAQUINETAS */}
+          <div className="space-y-4">
+            <h4 className="text-xs font-black text-gray-400 uppercase flex items-center gap-2 border-b pb-2">
+              <CreditCard size={14}/> Recebimentos Digitais
+            </h4>
+            <div className="bg-gray-50 p-4 rounded-xl border border-gray-100 space-y-2">
+               {modalDetalhes.dados.auditoria?.sistema?.maquinetasDetalhadas ? (
+                  Object.entries(modalDetalhes.dados.auditoria.sistema.maquinetasDetalhadas).map(([marca, valor]) => (
+                    <div key={marca} className="flex justify-between text-sm py-1 border-b border-gray-200/50 last:border-0">
+                      <span className="font-bold text-gray-600">{marca}:</span>
+                      <span className="font-black text-gray-800">{BRL(valor || 0)}</span>
+                    </div>
+                  ))
+               ) : <p className="text-xs text-gray-400 italic">Sem detalhamento de máquinas.</p>}
+               <div className="flex justify-between text-sm pt-2 text-blue-700 font-black">
+                  <span>TOTAL EM CARTÕES:</span>
+                  <span>{BRL(modalDetalhes.dados.auditoria?.sistema?.cartao || 0)}</span>
+               </div>
+            </div>
+          </div>
+
+          {/* LADO B: O QUE FOI CONTADO NA GAVETA */}
+          <div className="space-y-4">
+            <h4 className="text-xs font-black text-gray-400 uppercase flex items-center gap-2 border-b pb-2">
+              <DollarSign size={14}/> Conferência de Gaveta
+            </h4>
+            <div className="bg-gray-50 p-4 rounded-xl border border-gray-100 space-y-3">
+              <div className="flex justify-between text-sm">
+                <span className="font-bold text-gray-600 text-xs">Contagem Física (Notas + Moedas):</span>
+                <span className="font-black text-gray-800">{BRL(modalDetalhes.dados.auditoria?.fisico?.dinheiro)}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="font-bold text-gray-600 text-xs tracking-tighter">Diferença apenas no Dinheiro:</span>
+                <span className={`font-black ${modalDetalhes.dados.auditoria?.diferencas?.detalhes?.dinheiro < 0 ? 'text-red-500' : 'text-green-500'}`}>
+                  {BRL(modalDetalhes.dados.auditoria?.diferencas?.detalhes?.dinheiro)}
+                </span>
+              </div>
+              {modalDetalhes.dados.auditoria?.obs && (
+                <div className="mt-2 p-3 bg-amber-50 rounded-lg border border-amber-100">
+                  <p className="text-[10px] font-black text-amber-800 uppercase mb-1">Observação do Operador:</p>
+                  <p className="text-xs text-amber-900 italic leading-relaxed">"{modalDetalhes.dados.auditoria.obs}"</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+        </div>
+
+        <button onClick={() => setModalDetalhes(null)} className="w-full bg-gray-900 hover:bg-black text-white font-black py-4 rounded-2xl shadow-xl transition-all uppercase tracking-widest text-sm">
+          Fechar Relatório
+        </button>
       </div>
     </div>
   </div>
-</div>
-                <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
-                    <h3 className="font-bold text-gray-700 mb-3 flex items-center gap-2 text-sm uppercase"><Scale size={16}/> Conferência de Caixa</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div><p className="text-xs font-bold text-gray-500 mb-1">Contagem Física</p><div className="bg-white p-2 rounded border text-sm space-y-1"><div className="flex justify-between"><span>Dinheiro:</span> <strong>{BRL(modalDetalhes.dados.auditoria?.fisico?.dinheiro)}</strong></div><div className="flex justify-between"><span>Cartão (Maq):</span> <strong>{BRL(modalDetalhes.dados.auditoria?.fisico?.totalGeral - modalDetalhes.dados.auditoria?.fisico?.dinheiro - modalDetalhes.dados.auditoria?.fisico?.tuna - modalDetalhes.dados.auditoria?.fisico?.ifood)}</strong></div></div></div>
-                    <div><p className="text-xs font-bold text-gray-500 mb-1">Diferenças (Sobra/Falta)</p><div className="bg-white p-2 rounded border text-sm space-y-1"><div className="flex justify-between"><span>Geral:</span> <strong className={modalDetalhes.dados.auditoria?.diferencas?.total < 0 ? 'text-red-600' : 'text-green-600'}>{BRL(modalDetalhes.dados.auditoria?.diferencas?.total)}</strong></div><div className="flex justify-between text-xs text-gray-400"><span>Dinheiro:</span> <span>{BRL(modalDetalhes.dados.auditoria?.diferencas?.detalhes?.dinheiro)}</span></div></div></div>
-                    </div>
-                    {modalDetalhes.dados.auditoria?.obs && (<div className="mt-3 pt-3 border-t border-gray-200"><p className="text-xs font-bold text-gray-500">Observações:</p><p className="text-sm text-gray-700 italic">"{modalDetalhes.dados.auditoria.obs}"</p></div>)}
-                </div>
-                <div className="flex justify-end pt-2"><button onClick={() => setModalDetalhes(null)} className="bg-gray-800 text-white px-6 py-2 rounded-lg font-bold hover:bg-gray-900 transition-colors">Fechar Relatório</button></div>
-                </div>
-            </div>
-            </div>
-        </div>
-      )}
+)}
       
       {mostrarModalTexto && (
         <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4">
