@@ -155,8 +155,19 @@ export default function App() {
 
   // Extrato de vales individual
   const [modalExtrato, setModalExtrato] = useState(null);
+
+  // --- ESTADOS PARA DESCONTO DE VALE NO ACERTO DO MOTOBOY ---
+  const [idsValesParaDescontar, setIdsValesParaDescontar] = useState([]);
+
+  const valesDoMotoboyHoje = useMemo(() => {
+    if (categoria !== 'diaria_motoboy' || !funcionarioSelecionado) return [];
+    return transacoes.filter(t => 
+      (t.categoria === 'vale_produto' || t.categoria === 'vale_dinheiro') && 
+      t.info_desconto?.funcionarioId === parseInt(funcionarioSelecionado)
+    );
+  }, [transacoes, categoria, funcionarioSelecionado]);
   
-// --- EFEITO MÁGICO DO MOTOBOY ---
+// --- EFEITO MÁGICO DO MOTOBOY (COM DESCONTO DE VALES) ---
   useEffect(() => {
     if (categoria === 'diaria_motoboy') {
       const qtd = parseInt(motoQtd) || 0;
@@ -164,23 +175,26 @@ export default function App() {
       const meta = parseInt(motoMeta) || 0;
       const valAjuda = parseFloat(motoValorAjuda) || 0;
 
-      // Regra: Ganha ajuda se fizer IGUAL ou MAIS que a meta
+      // Soma os vales que você marcou no checklist
+      const totalDescontoVales = valesDoMotoboyHoje
+        .filter(v => idsValesParaDescontar.includes(v.id))
+        .reduce((acc, v) => acc + v.valor, 0);
+
       const ganhouAjuda = qtd >= meta;
-      const valorFinal = valEntregas + (ganhouAjuda ? valAjuda : 0);
+      // O valor final agora subtrai os vales marcados
+      const valorFinal = valEntregas + (ganhouAjuda ? valAjuda : 0) - totalDescontoVales;
 
-      // Atualiza o Valor Total do Lançamento
       if (valorFinal > 0) setValor(valorFinal.toFixed(2));
-      else setValor('');
+      else setValor('0.00');
 
-      // Gera a Descrição Técnica automática para o Extrato
-      // Ex: "Diária: 12 Entregas (R$ 40,00) + Ajuda (R$ 15,00)"
       let descTecnica = `${qtd} Entregas`;
       if (valEntregas > 0) descTecnica += ` (R$ ${valEntregas.toFixed(2)})`;
-      if (ganhouAjuda) descTecnica += ` + Ajuda (R$ ${valAjuda.toFixed(2)})`;
+      if (ganhouAjuda) descTecnica += ` + Ajuda`;
+      if (totalDescontoVales > 0) descTecnica += ` - DESC. VALES (R$ ${totalDescontoVales.toFixed(2)})`;
       
       setDescricao(descTecnica);
     }
-  }, [categoria, motoQtd, motoValorEntregas, motoMeta, motoValorAjuda]);
+  }, [categoria, motoQtd, motoValorEntregas, motoMeta, motoValorAjuda, idsValesParaDescontar, valesDoMotoboyHoje]);
   
   // --- EFEITOS SUPABASE (Carregamento Real) ---
   // 1. Carregar Transações e Entregas do Dia Selecionado
@@ -762,6 +776,18 @@ ${listaMovimentacoes.length > 0 ? listaMovimentacoes : '(Nenhuma movimentação)
         setFuncionarioSelecionado('');
         setSaidaViaPix(false);
         fetchTransacoes(); // Atualiza a lista na tela
+        // SE FOR MOTOBOY E TIVER VALES MARCADOS, "LIMPA" ELES DO RH
+        if (categoria === 'diaria_motoboy' && idsValesParaDescontar.length > 0) {
+            await supabase
+              .from('transacoes')
+              .update({ 
+                info_desconto: null, 
+                observacao: (observacao || '') + ' [LIQUIDADO NO ACERTO DIÁRIO]' 
+              })
+              .in('id', idsValesParaDescontar);
+            
+            setIdsValesParaDescontar([]); // Limpa a seleção
+        }
     }
   };
 
@@ -1915,6 +1941,35 @@ const realizarLogin = async (perfil) => {
             {parseInt(motoQtd) >= parseInt(motoMeta) && <span className="text-[10px] text-green-600 font-bold bg-green-50 px-1 rounded flex items-center justify-end gap-1">✅ Ajuda Inclusa</span>}
           </div>
        </div>
+       {/* --- CHECKLIST DE VALES/CONSUMO DO DIA --- */}
+        {valesDoMotoboyHoje.length > 0 && (
+          <div className="mt-3 pt-3 border-t border-orange-200">
+            <p className="text-[10px] font-black text-orange-800 uppercase mb-2">Abater Vales de Hoje?</p>
+            <div className="space-y-2">
+              {valesDoMotoboyHoje.map(v => (
+                <div key={v.id} className="flex items-center justify-between bg-white/50 p-2 rounded border border-orange-100">
+                  <div className="flex items-center gap-2">
+                    <input 
+                      type="checkbox" 
+                      className="w-4 h-4 text-green-600 rounded border-orange-300"
+                      checked={idsValesParaDescontar.includes(v.id)}
+                      onChange={() => {
+                        setIdsValesParaDescontar(prev => 
+                          prev.includes(v.id) ? prev.filter(id => id !== v.id) : [...prev, v.id]
+                        );
+                      }}
+                    />
+                    <span className="text-[10px] font-bold text-gray-600">{v.descricao || 'Consumo'}</span>
+                  </div>
+                  <span className="text-xs font-black text-red-600">{BRL(v.valor)}</span>
+                </div>
+              ))}
+            </div>
+            <p className="text-[9px] text-orange-700 mt-2 italic font-medium">
+              * Itens marcados serão liquidados agora e sairão da folha mensal.
+            </p>
+          </div>
+        )}
     </div>
   )}
                       {/* --- COLE ESTE CÓDIGO NOVO AQUI: --- */}
